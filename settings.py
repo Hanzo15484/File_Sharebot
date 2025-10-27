@@ -21,7 +21,7 @@ def load_settings():
 # Save settings
 def save_settings(settings):
     with open('settings.json', 'w') as f:
-        json.dump(settings, f)
+        json.dump(settings, f, indent=4)
 
 # Load admin data
 def load_admins():
@@ -65,7 +65,10 @@ async def settings_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     
     reply_markup = InlineKeyboardMarkup(keyboard)
     
-    await update.message.reply_text(settings_text, reply_markup=reply_markup, parse_mode="Markdown")
+    if update.callback_query:
+        await update.callback_query.edit_message_text(settings_text, reply_markup=reply_markup, parse_mode="Markdown")
+    else:
+        await update.message.reply_text(settings_text, reply_markup=reply_markup, parse_mode="Markdown")
 
 async def settings_button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
@@ -79,6 +82,8 @@ async def settings_button_handler(update: Update, context: ContextTypes.DEFAULT_
     if user_id not in admins and user_id != 5373577888:
         await query.answer("You are not authorized!", show_alert=True)
         return
+    
+    settings = load_settings()
     
     if data == "settings_start_img":
         await query.edit_message_text(
@@ -101,12 +106,25 @@ async def settings_button_handler(update: Update, context: ContextTypes.DEFAULT_
         context.user_data['waiting_for'] = 'help_image'
         
     elif data == "settings_auto_delete":
+        auto_delete_time = settings.get("auto_delete_time", 10)
+        
+        # Create buttons with checkmarks for current selection
+        buttons_5 = "5 ᴍɪɴ" if auto_delete_time != 5 else "✅ 5 ᴍɪɴ"
+        buttons_10 = "10 ᴍɪɴ" if auto_delete_time != 10 else "✅ 10 ᴍɪɴ"
+        buttons_15 = "15 ᴍɪɴ" if auto_delete_time != 15 else "✅ 15 ᴍɪɴ"
+        buttons_20 = "20 ᴍɪɴ" if auto_delete_time != 20 else "✅ 20 ᴍɪɴ"
+        buttons_30 = "30 ᴍɪɴ" if auto_delete_time != 30 else "✅ 30 ᴍɪɴ"
+        buttons_45 = "45 ᴍɪɴ" if auto_delete_time != 45 else "✅ 45 ᴍɪɴ"
+        buttons_60 = "1 ʜʀ" if auto_delete_time != 60 else "✅ 1 ʜʀ"
+        buttons_180 = "3 ʜʀ" if auto_delete_time != 180 else "✅ 3 ʜʀ"
+        buttons_0 = "ᴅɪsᴀʙʟᴇ" if auto_delete_time != 0 else "✅ ᴅɪsᴀʙʟᴇ"
+        
         keyboard = [
-            [InlineKeyboardButton("5 ᴍɪɴ", callback_data="auto_delete_5"), InlineKeyboardButton("10 ᴍɪɴ", callback_data="auto_delete_10")],
-            [InlineKeyboardButton("15 ᴍɪɴ", callback_data="auto_delete_15"), InlineKeyboardButton("20 ᴍɪɴ", callback_data="auto_delete_20")],
-            [InlineKeyboardButton("30 ᴍɪɴ", callback_data="auto_delete_30"), InlineKeyboardButton("45 ᴍɪɴ", callback_data="auto_delete_45")],
-            [InlineKeyboardButton("1 ʜʀ", callback_data="auto_delete_60"), InlineKeyboardButton("3 ʜʀ", callback_data="auto_delete_180")],
-            [InlineKeyboardButton("ᴅɪsᴀʙʟᴇ", callback_data="auto_delete_0")],
+            [InlineKeyboardButton(buttons_5, callback_data="auto_delete_5"), InlineKeyboardButton(buttons_10, callback_data="auto_delete_10")],
+            [InlineKeyboardButton(buttons_15, callback_data="auto_delete_15"), InlineKeyboardButton(buttons_20, callback_data="auto_delete_20")],
+            [InlineKeyboardButton(buttons_30, callback_data="auto_delete_30"), InlineKeyboardButton(buttons_45, callback_data="auto_delete_45")],
+            [InlineKeyboardButton(buttons_60, callback_data="auto_delete_60"), InlineKeyboardButton(buttons_180, callback_data="auto_delete_180")],
+            [InlineKeyboardButton(buttons_0, callback_data="auto_delete_0")],
             [InlineKeyboardButton("🔙 Back", callback_data="settings_back")]
         ]
         
@@ -117,9 +135,9 @@ async def settings_button_handler(update: Update, context: ContextTypes.DEFAULT_
         )
         
     elif data == "settings_protect_content":
-        settings = load_settings()
         protect_content = settings.get("protect_content", False)
         
+        # Create buttons with checkmarks
         on_text = "✅ ᴏɴ" if protect_content else "ᴏɴ"
         off_text = "✅ ᴏғғ" if not protect_content else "ᴏғғ"
         
@@ -158,16 +176,15 @@ async def settings_button_handler(update: Update, context: ContextTypes.DEFAULT_
         
     elif data.startswith("auto_delete_"):
         time_minutes = int(data.split("_")[2])
-        settings = load_settings()
         settings["auto_delete_time"] = time_minutes
         save_settings(settings)
         
         status = "Disabled" if time_minutes == 0 else f"{time_minutes} minutes"
         await query.answer(f"Auto delete set to {status}!", show_alert=True)
-        await settings_handler(update, context)
+        # Go back to auto delete menu to show updated buttons
+        await settings_button_handler(update, context)
         
     elif data.startswith("protect_"):
-        settings = load_settings()
         if data == "protect_on":
             settings["protect_content"] = True
             save_settings(settings)
@@ -176,7 +193,8 @@ async def settings_button_handler(update: Update, context: ContextTypes.DEFAULT_
             settings["protect_content"] = False
             save_settings(settings)
             await query.answer("Protect content disabled!", show_alert=True)
-        await settings_handler(update, context)
+        # Go back to protect content menu to show updated buttons
+        await settings_button_handler(update, context)
         
     elif data == "settings_back":
         await settings_handler(update, context)
@@ -211,6 +229,9 @@ async def settings_message_handler(update: Update, context: ContextTypes.DEFAULT
             save_settings(settings)
             
             await update.message.reply_text(f"✅ {waiting_for.replace('_', ' ').title()} has been set successfully!")
+            # Clear waiting state and go back to settings
+            context.user_data.pop('waiting_for', None)
+            await settings_handler(update, context)
         else:
             await update.message.reply_text("❌ Please send a valid image!")
             
@@ -220,7 +241,6 @@ async def settings_message_handler(update: Update, context: ContextTypes.DEFAULT
         save_settings(settings)
         
         await update.message.reply_text(f"✅ {waiting_for.replace('_', ' ').title()} has been updated successfully!")
-    
-    # Clear waiting state
-    context.user_data.pop('waiting_for', None)
-    await settings_handler(update, context)
+        # Clear waiting state and go back to settings
+        context.user_data.pop('waiting_for', None)
+        await settings_handler(update, context)
