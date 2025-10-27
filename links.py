@@ -77,7 +77,7 @@ async def genlink_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     links[encoded_id] = {
         "chat_id": chat_id,
         "message_id": message_id,
-        "created_at": datetime.now().isoformat(),
+        "created_at": datetime.utcnow().isoformat(),
         "created_by": user_id
     }
     save_links(links)
@@ -126,28 +126,16 @@ async def start_link_handler(update: Update, context: ContextTypes.DEFAULT_TYPE)
             protect_content=protect_content
         )
         
-        # Send warning message
+        # Store the forwarded message info for deletion
         auto_delete_time = settings.get("auto_delete_time", 10)
-        warning_text = f"> *⚠️ ɪᴍᴘᴏʀᴛᴀɴᴛ\\:*\n\n> *ᴛʜɪs ғɪʟᴇ ᴡɪʟʟ ʙᴇ ᴅᴇʟᴇᴛᴇᴅ ɪɴ {auto_delete_time} ᴍɪɴᴜᴛᴇs\\. ᴘʟᴇᴀsᴇ sᴀᴠᴇ ᴏʀ ғᴏʀᴡᴀʀᴅ ɪᴛ ᴛᴏ ʏᴏᴜʀ sᴀᴠᴇᴅ ᴍᴇssᴀɢᴇs ʙᴇғᴏʀᴇ ɪᴛ ɢᴇᴛs ʀᴇᴍᴏᴠᴇᴅ\\.*"
-        
-        keyboard = InlineKeyboardMarkup([
-            [InlineKeyboardButton("♻️ ᴄʟɪᴄᴋ ʜᴇʀᴇ", url=f"https://t.me/{context.bot.username}?start={encoded_id}")],
-            [InlineKeyboardButton("ᴄʟᴏsᴇ", callback_data=f"link_close:{forwarded_msg.message_id}")]
-        ])
-        
-        warning_msg = await update.message.reply_text(
-            warning_text,
-            reply_markup=keyboard,
-            parse_mode="MarkdownV2"
-        )
-        
-        # Schedule deletion
+        await update.message.reply_text(f"> *⚠️ ɪᴍᴘᴏʀᴛᴀɴᴛ\\:*\n\n> *ᴛʜɪs ғɪʟᴇ ᴡɪʟʟ ʙᴇ ᴅᴇʟᴇᴛᴇᴅ ɪɴ {auto_delete_time} ᴍɪɴᴜᴛᴇs\\. ᴘʟᴇᴀsᴇ sᴀᴠᴇ ᴏʀ ғᴏʀᴡᴀʀᴅ ɪᴛ ᴛᴏ ʏᴏᴜʀ sᴀᴠᴇᴅ ᴍᴇssᴀɢᴇs ʙᴇғᴏʀᴇ ɪᴛ ɢᴇᴛs ʀᴇᴍᴏᴠᴇᴅ\\.*",
+        parse_mode = "MarkdownV2")
+        # Schedule deletion without sending warning message first
         asyncio.create_task(
-            delete_after_delay(
+            delete_and_notify(
                 context, 
                 update.effective_chat.id, 
-                forwarded_msg.message_id, 
-                warning_msg.message_id,
+                forwarded_msg.message_id,
                 auto_delete_time,
                 encoded_id
             )
@@ -156,31 +144,51 @@ async def start_link_handler(update: Update, context: ContextTypes.DEFAULT_TYPE)
     except Exception as e:
         await update.message.reply_text("❌ Error retrieving file. It may have been deleted.")
 
-async def delete_after_delay(context, chat_id, file_msg_id, warning_msg_id, delay_minutes, encoded_id):
+async def delete_and_notify(context, chat_id, file_msg_id, delay_minutes, encoded_id):
+    """Delete file after delay and send retrieval message"""
+    
+    # Wait for the specified time
     await asyncio.sleep(delay_minutes * 60)
     
     try:
         # Delete the file message
         await context.bot.delete_message(chat_id, file_msg_id)
-    except:
-        pass
+    except Exception as e:
+        print(f"Error deleting file message: {e}")
+    
+    # Send retrieval message after deletion
+    completion_text = (
+        "*✅ ʏᴏᴜʀ ғɪʟᴇ/ᴠɪᴅᴇᴏ ʜᴀs ʙᴇᴇɴ sᴜᴄᴄᴇssғᴜʟʟʏ ᴅᴇʟᴇᴛᴇᴅ\\!*\n\n"
+        "> *ɪғ ʏᴏᴜ ᴡᴀɴᴛ ᴛᴏ ʀᴇᴛʀɪᴇᴠᴇ ɪᴛ ᴀɢᴀɪɴ, ᴄʟɪᴄᴋ ᴛʜᴇ \"♻️ ᴄʟɪᴄᴋ ʜᴇʀᴇ\" ʙᴜᴛᴛᴏɴ\\. ɪғ ɴᴏᴛ, sɪᴍᴘʟʏ ᴄʟᴏsᴇ ᴛʜɪs ᴍᴇssᴀɢᴇ\\.*"
+    )
+    
+    keyboard = InlineKeyboardMarkup([
+        [
+            InlineKeyboardButton("♻️ ᴄʟɪᴄᴋ ʜᴇʀᴇ", url=f"https://t.me/{context.bot.username}?start={encoded_id}"),
+            InlineKeyboardButton("ᴄʟᴏsᴇ", callback_data=f"link_close")
+        ]
+    ])
     
     try:
-        # Update warning message
-        completion_text = "*✅ ʏᴏᴜʀ ғɪʟᴇ/ᴠɪᴅᴇᴏ ʜᴀs ʙᴇᴇɴ sᴜᴄᴄᴇssғᴜʟʟʏ ᴅᴇʟᴇᴛᴇᴅ\\!*\n> *ɪғ ʏᴏᴜ ᴡᴀɴᴛ ᴛᴏ ʀᴇᴛʀɪᴇᴠᴇ ɪᴛ ᴀɢᴀɪɴ, ᴄʟɪᴄᴋ ᴛʜᴇ \"♻️ ᴄʟɪᴄᴋ ʜᴇʀᴇ\" ʙᴜᴛᴛᴏɴ\\. ɪғ ɴᴏᴛ, sɪᴍᴘʟʏ ᴄʟᴏsᴇ ᴛʜɪs ᴍᴇssᴀɢᴇ\\.*"
-        
-        keyboard = InlineKeyboardMarkup([
-            [InlineKeyboardButton("♻️ ᴄʟɪᴄᴋ ʜᴇʀᴇ", url=f"https://t.me/{context.bot.username}?start={encoded_id}")],
-            [InlineKeyboardButton("ᴄʟᴏsᴇ", callback_data=f"link_close:{warning_msg_id}")]
-        ])
-        
-        await context.bot.edit_message_text(
+        retrieval_msg = await context.bot.send_message(
             chat_id=chat_id,
-            message_id=warning_msg_id,
             text=completion_text,
             reply_markup=keyboard,
             parse_mode="MarkdownV2"
         )
+        
+        # Schedule deletion of retrieval message after 10 minutes
+        asyncio.create_task(
+            delete_retrieval_message(context, chat_id, retrieval_msg.message_id, 10)
+        )
+    except Exception as e:
+        print(f"Error sending retrieval message: {e}")
+
+async def delete_retrieval_message(context, chat_id, message_id, delay_minutes):
+    """Delete retrieval message after delay"""
+    await asyncio.sleep(delay_minutes * 60)
+    try:
+        await context.bot.delete_message(chat_id, message_id)
     except:
         pass
 
@@ -190,12 +198,7 @@ async def link_button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE
     
     data = query.data
     
-    if data.startswith("link_close:"):
-        message_id = int(data.split(":")[1])
-        try:
-            await context.bot.delete_message(query.message.chat_id, message_id)
-        except:
-            pass
+    if data == "link_close":
         await query.message.delete()
 
 # Load admin data
