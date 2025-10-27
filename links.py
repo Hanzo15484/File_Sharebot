@@ -156,7 +156,12 @@ async def delete_and_notify(context, chat_id, file_msg_id, warning_msg_id, delay
         await context.bot.delete_message(chat_id, file_msg_id)
     except Exception as e:
         print(f"Error deleting file message: {e}")
-    
+        
+    try:
+        await context.bot.delete_message(chat_id, warning_msg_id)
+    except Exception as e:
+        print(f"Error deleting warning message: {e}")
+        
     # Send retrieval message after deletion
     completion_text = (
         "*✅ ʏᴏᴜʀ ғɪʟᴇ/ᴠɪᴅᴇᴏ ʜᴀs ʙᴇᴇɴ sᴜᴄᴄᴇssғᴜʟʟʏ ᴅᴇʟᴇᴛᴇᴅ\\!*\n\n"
