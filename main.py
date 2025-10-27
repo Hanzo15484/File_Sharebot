@@ -1,6 +1,7 @@
 import os
 import json
 import logging
+from dotenv import load_dotenv
 from telegram.ext import Application, CommandHandler, CallbackQueryHandler
 from start import start_handler, button_handler as start_button_handler
 from help import help_handler, button_handler as help_button_handler
