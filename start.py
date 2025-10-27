@@ -25,7 +25,7 @@ async def start_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     # Send message with image
     try:
         with open('img.jpg', 'rb') as photo:
-            await context.bot.send_photo(
+            message = await context.bot.send_photo(
                 chat_id=update.effective_chat.id,
                 photo=photo,
                 caption=f"Hi {mention} welcome to File Store Bot",
@@ -34,7 +34,7 @@ async def start_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
             )
     except FileNotFoundError:
         # If image not found, send text only
-        await context.bot.send_message(
+        message = await context.bot.send_message(
             chat_id=update.effective_chat.id,
             text=f"Hi {mention} welcome to File Store Bot",
             reply_markup=reply_markup,
@@ -54,7 +54,7 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
             "Bot Username - @YourBotUsername\n"
             "Python Version - 3.8+\n"
             "Database - JSON\n"
-            "Owner - Your Name\n\n"
+            "Owner - 5373577888\n\n"
             "This bot is only for Anime Fable"
         )
         
@@ -64,32 +64,66 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         ]
         reply_markup = InlineKeyboardMarkup(keyboard)
         
-        await query.edit_message_caption(
-            caption=about_text,
-            reply_markup=reply_markup
-        )
+        # Check if message has photo (caption) or is text message
+        if query.message.photo:
+            await query.edit_message_caption(
+                caption=about_text,
+                reply_markup=reply_markup
+            )
+        else:
+            await query.edit_message_text(
+                text=about_text,
+                reply_markup=reply_markup
+            )
     
     elif data == "start_help":
         admins = load_admins()
-        if user_id not in admins and user_id != 123456789:  # Replace with owner ID
+        if user_id not in admins and user_id != 5373577888:  # Owner ID
             await query.answer("You are not my senpai!", show_alert=True)
             return
         
-        # If user is admin/owner, show help
+        # If user is admin/owner, show help menu
+        help_text = (
+            "Available Commands:\n\n"
+            "/start - Start the bot\n"
+            "/help - Show this help message\n"
+            "/genlink - Generate link\n"
+            "/batchlink - Generate batch links\n"
+            "/custombatch - Custom batch processing\n"
+            "/fsub - Force subscribe\n"
+            "/settings - Bot settings\n"
+            "/promote - Promote user to admin\n"
+            "/demote - Demote admin\n"
+            "/ban - Ban user\n"
+            "/unban - Unban user\n"
+            "/users - Show users\n"
+            "/admins - Show admins\n"
+            "/update - Update bot\n"
+            "/restart - Restart bot"
+        )
+        
         keyboard = [
             [InlineKeyboardButton("Back", callback_data="start_back")],
             [InlineKeyboardButton("Close", callback_data="start_close")]
         ]
         reply_markup = InlineKeyboardMarkup(keyboard)
         
-        await query.edit_message_caption(
-            caption="Help section - Click Help button for detailed help",
-            reply_markup=reply_markup
-        )
+        # Check if message has photo (caption) or is text message
+        if query.message.photo:
+            await query.edit_message_caption(
+                caption=help_text,
+                reply_markup=reply_markup
+            )
+        else:
+            await query.edit_message_text(
+                text=help_text,
+                reply_markup=reply_markup
+            )
     
     elif data == "start_back":
         user = query.from_user
         mention = user.mention_html()
+        welcome_text = f"Hi {mention} welcome to File Store Bot"
         
         keyboard = [
             [InlineKeyboardButton("About", callback_data="start_about")],
@@ -98,11 +132,19 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         ]
         reply_markup = InlineKeyboardMarkup(keyboard)
         
-        await query.edit_message_caption(
-            caption=f"Hi {mention} welcome to File Store Bot",
-            reply_markup=reply_markup,
-            parse_mode='HTML'
-        )
+        # Check if message has photo (caption) or is text message
+        if query.message.photo:
+            await query.edit_message_caption(
+                caption=welcome_text,
+                reply_markup=reply_markup,
+                parse_mode='HTML'
+            )
+        else:
+            await query.edit_message_text(
+                text=welcome_text,
+                reply_markup=reply_markup,
+                parse_mode='HTML'
+            )
     
     elif data == "start_close":
         await query.message.delete()
