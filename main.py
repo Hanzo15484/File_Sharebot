@@ -2,7 +2,7 @@ import os
 import json
 import logging
 from telegram.ext import Application, CommandHandler, CallbackQueryHandler, MessageHandler, filters
-
+from dotenv import load_dotenv
 # Import handlers from all modules
 from start import start_handler, button_handler as start_button_handler
 from help import help_handler, button_handler as help_button_handler
@@ -61,6 +61,7 @@ def main():
     load_json_files()
     
     # Get bot token from environment variable
+    load_dotenv("Bot_Token.env")
     TOKEN = os.getenv('BOT_TOKEN')
     if not TOKEN:
         print("❌ ERROR: Please set BOT_TOKEN environment variable")
