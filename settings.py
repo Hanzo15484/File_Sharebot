@@ -12,6 +12,7 @@ def load_settings():
         return {
             "start_image": "img.jpg",
             "help_image": "",
+            "force_sub_image": "",
             "start_text": "Hi {mention} welcome to File Store Bot",
             "help_text": "Available Commands:\\n\\n/start - Start the bot\\n/help - Show this help message\\n/genlink - Generate link\\n/batchlink - Generate batch links\\n/custombatch - Custom batch processing\\n/fsub - Force subscribe\\n/settings - Bot settings\\n/promote - Promote user to admin\\n/demote - Demote admin\\n/ban - Ban user\\n/unban - Unban user\\n/users - Show users\\n/admins - Show admins\\n/update - Update bot\\n/restart - Restart bot",
             "auto_delete_time": 10,
@@ -46,21 +47,23 @@ async def settings_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     
     settings_text = (
         "⚙️ **Bot Settings**\n\n"
-        f"🖼️ Start Image: {'✅ Set' if settings.get('start_image') and os.path.exists(settings.get('start_image')) else '❌ Not Set'}\n"
-        f"📖 Help Image: {'✅ Set' if settings.get('help_image') and os.path.exists(settings.get('help_image')) else '❌ Not Set'}\n"
-        f"⏰ Auto Delete: {auto_delete_time} minutes\n"
-        f"🔒 Protect Content: {'✅ ON' if protect_content else '❌ OFF'}\n\n"
-        "Select an option to configure:"
+        f"sᴛᴀʀᴛ ɪᴍᴀɢᴇ: {'✅ Set' if settings.get('start_image') and os.path.exists(settings.get('start_image')) else '❌ Not Set'}\n"
+        f"ʜᴇʟᴘ ɪᴍᴀɢᴇ: {'✅ Set' if settings.get('help_image') and os.path.exists(settings.get('help_image')) else '❌ Not Set'}\n"
+        f"ᴀᴜᴛᴏ ᴅᴇʟᴇᴛᴇ: {auto_delete_time} minutes\n"
+        f"ᴘʀᴏᴛᴇᴄᴛ ᴄᴏɴᴛᴇɴᴛ: {'✅ ON' if protect_content else '❌ OFF'}\n\n"
+        f"ғᴏʀᴄᴇ sᴜʙ ɪᴍᴀɢᴇ: {'✅ Set' if settings.get('force_sub_image') and os.path.exists(settings.get('force_sub_image')) else '❌ Not Set'}\n"
+        "sᴇʟᴇᴄᴛ ᴀɴ ᴏᴘᴛɪᴏɴ ᴛᴏ ᴄᴏɴғɪɢᴜʀᴇ:"
     )
     
     keyboard = [
-        [InlineKeyboardButton("🖼️ Start Image", callback_data="settings_start_img")],
-        [InlineKeyboardButton("📖 Help Image", callback_data="settings_help_img")],
-        [InlineKeyboardButton("⏰ Auto Delete", callback_data="settings_auto_delete")],
-        [InlineKeyboardButton("🔒 Protect Content", callback_data="settings_protect_content")],
-        [InlineKeyboardButton("📝 Start Text", callback_data="settings_start_text")],
-        [InlineKeyboardButton("📋 Help Text", callback_data="settings_help_text")],
-        [InlineKeyboardButton("🔙 Back", callback_data="settings_back"), InlineKeyboardButton("❌ Close", callback_data="settings_close")]
+        [InlineKeyboardButton("sᴛᴀʀᴛ ɪᴍᴀɢᴇ", callback_data="settings_start_img")],
+        [InlineKeyboardButton("ʜᴇʟᴘ ɪᴍᴀɢᴇ", callback_data="settings_help_img")],
+        [InlineKeyboardButton("ᴀᴜᴛᴏ ᴅᴇʟᴇᴛᴇ", callback_data="settings_auto_delete")],
+        [InlineKeyboardButton("ᴘʀᴏᴛᴇᴄᴛ ᴄᴏɴᴛᴇɴᴛ", callback_data="settings_protect_content")],
+        [InlineKeyboardButton("sᴛᴀʀᴛ ᴛᴇxᴛ", callback_data="settings_start_text")],
+        [InlineKeyboardButton("ʜᴇʟᴘ ᴛᴇxᴛ", callback_data="settings_help_text")],
+        [InlinekeyboardButton("ғᴏʀᴄᴇ sᴜʙ ɪᴍᴀɢᴇ", callback_data="settings_force_sub_image")],
+        [InlineKeyboardButton("《 ʙᴀᴄᴋ", callback_data="settings_back"), InlineKeyboardButton("❌ Close", callback_data="settings_close")]
     ]
     
     reply_markup = InlineKeyboardMarkup(keyboard)
@@ -99,7 +102,7 @@ async def settings_button_handler(update: Update, context: ContextTypes.DEFAULT_
         await query.edit_message_text(
             "📖 **Help Image Settings**\n\nɴᴏᴡ sᴇɴᴅ ᴍᴇ ɪᴍᴀɢᴇ ᴛʜᴀᴛ ʏᴏᴜ ᴡᴀɴᴛ ᴛᴏ sᴇᴛ ɪɴ ʜᴇʟᴘ ᴍᴏᴅᴜʟᴇ",
             reply_markup=InlineKeyboardMarkup([
-                [InlineKeyboardButton("🔙 Back", callback_data="settings_back")]
+                [InlineKeyboardButton("《 ʙᴀᴄᴋ", callback_data="settings_back")]
             ]),
             parse_mode="Markdown"
         )
@@ -125,7 +128,7 @@ async def settings_button_handler(update: Update, context: ContextTypes.DEFAULT_
             [InlineKeyboardButton(buttons_30, callback_data="auto_delete_30"), InlineKeyboardButton(buttons_45, callback_data="auto_delete_45")],
             [InlineKeyboardButton(buttons_60, callback_data="auto_delete_60"), InlineKeyboardButton(buttons_180, callback_data="auto_delete_180")],
             [InlineKeyboardButton(buttons_0, callback_data="auto_delete_0")],
-            [InlineKeyboardButton("🔙 Back", callback_data="settings_back")]
+            [InlineKeyboardButton("《 ʙᴀᴄᴋ", callback_data="settings_back")]
         ]
         
         await query.edit_message_text(
@@ -144,7 +147,7 @@ async def settings_button_handler(update: Update, context: ContextTypes.DEFAULT_
         keyboard = [
             [InlineKeyboardButton("ғᴏʀᴡᴀʀᴅ", callback_data="protect_forward")],
             [InlineKeyboardButton(on_text, callback_data="protect_on"), InlineKeyboardButton(off_text, callback_data="protect_off")],
-            [InlineKeyboardButton("🔙 Back", callback_data="settings_back")]
+            [InlineKeyboardButton("《 ʙᴀᴄᴋ", callback_data="settings_back")]
         ]
         
         status = "✅ Enabled" if protect_content else "❌ Disabled"
@@ -158,7 +161,7 @@ async def settings_button_handler(update: Update, context: ContextTypes.DEFAULT_
         await query.edit_message_text(
             "📝 **Start Text Settings**\n\nSend me the new start text. You can use {mention} for user mention.",
             reply_markup=InlineKeyboardMarkup([
-                [InlineKeyboardButton("🔙 Back", callback_data="settings_back")]
+                [InlineKeyboardButton("《 ʙᴀᴄᴋ", callback_data="settings_back")]
             ]),
             parse_mode="Markdown"
         )
@@ -168,7 +171,7 @@ async def settings_button_handler(update: Update, context: ContextTypes.DEFAULT_
         await query.edit_message_text(
             "📋 **Help Text Settings**\n\nSend me the new help text.",
             reply_markup=InlineKeyboardMarkup([
-                [InlineKeyboardButton("🔙 Back", callback_data="settings_back")]
+                [InlineKeyboardButton("《 ʙᴀᴄᴋ", callback_data="settings_back")]
             ]),
             parse_mode="Markdown"
         )
