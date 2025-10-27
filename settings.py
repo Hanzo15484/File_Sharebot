@@ -107,7 +107,17 @@ async def settings_button_handler(update: Update, context: ContextTypes.DEFAULT_
             parse_mode="Markdown"
         )
         context.user_data['waiting_for'] = 'help_image'
-        
+
+    elif data == "settings_force_sub_image"
+        await query.edit_message_text(
+           "🔒 **Force Subscribe Image Settings**\n\nɴᴏᴡ sᴇɴᴅ ᴍᴇ ɪᴍᴀɢᴇ ᴛʜᴀᴛ ʏᴏᴜ ᴡᴀɴᴛ ᴛᴏ sᴇᴛ ɪɴ ғᴏʀᴄᴇ sᴜʙsᴄʀɪʙᴇ ᴍᴏᴅᴜʟᴇ",
+            reply_markup=InlineKeyboardMarkup([
+                [InlineKeyboardButton("🔙 Back", callback_data="settings_back")]
+            ]),
+            parse_mode="Markdown"
+        )
+        context.user_data['waiting_for'] = 'force_sub_image'
+    
     elif data == "settings_auto_delete":
         auto_delete_time = settings.get("auto_delete_time", 10)
         
@@ -244,6 +254,23 @@ async def settings_message_handler(update: Update, context: ContextTypes.DEFAULT
         save_settings(settings)
         
         await update.message.reply_text(f"✅ {waiting_for.replace('_', ' ').title()} has been updated successfully!")
+    elif waiting_for == 'force_sub_image':
+        if update.message.photo:
+            # Get the largest photo
+            photo = update.message.photo[-1]
+            photo_file = await photo.get_file()
+            filename = "force_sub_image.jpg"
+            await photo_file.download_to_drive(filename)
+            
+            settings[waiting_for] = filename
+            save_settings(settings)
+            
+            await update.message.reply_text("✅ Force Subscribe image has been set successfully!")
+            # Clear waiting state and go back to settings
+            context.user_data.pop('waiting_for', None)
+            await settings_handler(update, context)
+        else:
+            await update.message.reply_text("❌ Please send a valid image!")
         # Clear waiting state and go back to settings
         context.user_data.pop('waiting_for', None)
         await settings_handler(update, context)
