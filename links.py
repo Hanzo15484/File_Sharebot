@@ -130,14 +130,13 @@ async def start_link_handler(update: Update, context: ContextTypes.DEFAULT_TYPE)
         auto_delete_time = settings.get("auto_delete_time", 10)
         msg = await update.message.reply_text(f"> *⚠️ ɪᴍᴘᴏʀᴛᴀɴᴛ\\:*\n\n> *ᴛʜɪs ғɪʟᴇ ᴡɪʟʟ ʙᴇ ᴅᴇʟᴇᴛᴇᴅ ɪɴ {auto_delete_time} ᴍɪɴᴜᴛᴇs\\. ᴘʟᴇᴀsᴇ sᴀᴠᴇ ᴏʀ ғᴏʀᴡᴀʀᴅ ɪᴛ ᴛᴏ ʏᴏᴜʀ sᴀᴠᴇᴅ ᴍᴇssᴀɢᴇs ʙᴇғᴏʀᴇ ɪᴛ ɢᴇᴛs ʀᴇᴍᴏᴠᴇᴅ\\.*",
         parse_mode = "MarkdownV2")
-        await asyncio.sleep(delay_minutes * 60)
-        await msg.delete()
         # Schedule deletion without sending warning message first
         asyncio.create_task(
             delete_and_notify(
                 context, 
                 update.effective_chat.id, 
                 forwarded_msg.message_id,
+                msg.message_id,
                 auto_delete_time,
                 encoded_id
             )
@@ -146,7 +145,7 @@ async def start_link_handler(update: Update, context: ContextTypes.DEFAULT_TYPE)
     except Exception as e:
         await update.message.reply_text("❌ Error retrieving file. It may have been deleted.")
 
-async def delete_and_notify(context, chat_id, file_msg_id, delay_minutes, encoded_id):
+async def delete_and_notify(context, chat_id, file_msg_id, warning_msg_id, delay_minutes, encoded_id):
     """Delete file after delay and send retrieval message"""
     
     # Wait for the specified time
