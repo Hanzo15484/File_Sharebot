@@ -10,9 +10,25 @@ def load_admins():
     except:
         return []
 
+# Load settings
+def load_settings():
+    try:
+        with open('settings.json', 'r') as f:
+            return json.load(f)
+    except:
+        return {
+            "start_image": "img.jpg",
+            "start_text": "Hi {mention} welcome to File Store Bot",
+            "help_text": "Available Commands:\\n\\n/start - Start the bot\\n/help - Show this help message\\n/genlink - Generate link\\n/batchlink - Generate batch links\\n/custombatch - Custom batch processing\\n/fsub - Force subscribe\\n/settings - Bot settings\\n/promote - Promote user to admin\\n/demote - Demote admin\\n/ban - Ban user\\n/unban - Unban user\\n/users - Show users\\n/admins - Show admins\\n/update - Update bot\\n/restart - Restart bot"
+        }
+
 async def start_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user = update.effective_user
     mention = user.mention_html()
+    
+    settings = load_settings()
+    start_text = settings.get("start_text", "Hi {mention} welcome to File Store Bot").format(mention=mention)
+    start_image = settings.get("start_image", "img.jpg")
     
     # Create keyboard
     keyboard = [
@@ -24,19 +40,19 @@ async def start_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     
     # Send message with image
     try:
-        with open('img.jpg', 'rb') as photo:
-            message = await context.bot.send_photo(
+        with open(start_image, 'rb') as photo:
+            await context.bot.send_photo(
                 chat_id=update.effective_chat.id,
                 photo=photo,
-                caption=f"Hi {mention} welcome to File Store Bot",
+                caption=start_text,
                 reply_markup=reply_markup,
                 parse_mode='HTML'
             )
     except FileNotFoundError:
         # If image not found, send text only
-        message = await context.bot.send_message(
+        await context.bot.send_message(
             chat_id=update.effective_chat.id,
-            text=f"Hi {mention} welcome to File Store Bot",
+            text=start_text,
             reply_markup=reply_markup,
             parse_mode='HTML'
         )
@@ -83,23 +99,9 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
             return
         
         # If user is admin/owner, show help menu
-        help_text = (
-            "Available Commands:\n\n"
-            "/start - Start the bot\n"
-            "/help - Show this help message\n"
-            "/genlink - Generate link\n"
-            "/batchlink - Generate batch links\n"
-            "/custombatch - Custom batch processing\n"
-            "/fsub - Force subscribe\n"
-            "/settings - Bot settings\n"
-            "/promote - Promote user to admin\n"
-            "/demote - Demote admin\n"
-            "/ban - Ban user\n"
-            "/unban - Unban user\n"
-            "/users - Show users\n"
-            "/admins - Show admins\n"
-            "/update - Update bot\n"
-            "/restart - Restart bot"
+        settings = load_settings()
+        help_text = settings.get("help_text", 
+            "Available Commands:\\n\\n/start - Start the bot\\n/help - Show this help message\\n/genlink - Generate link\\n/batchlink - Generate batch links\\n/custombatch - Custom batch processing\\n/fsub - Force subscribe\\n/settings - Bot settings\\n/promote - Promote user to admin\\n/demote - Demote admin\\n/ban - Ban user\\n/unban - Unban user\\n/users - Show users\\n/admins - Show admins\\n/update - Update bot\\n/restart - Restart bot"
         )
         
         keyboard = [
@@ -123,7 +125,9 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     elif data == "start_back":
         user = query.from_user
         mention = user.mention_html()
-        welcome_text = f"Hi {mention} welcome to File Store Bot"
+        
+        settings = load_settings()
+        start_text = settings.get("start_text", "Hi {mention} welcome to File Store Bot").format(mention=mention)
         
         keyboard = [
             [InlineKeyboardButton("About", callback_data="start_about")],
@@ -135,13 +139,13 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         # Check if message has photo (caption) or is text message
         if query.message.photo:
             await query.edit_message_caption(
-                caption=welcome_text,
+                caption=start_text,
                 reply_markup=reply_markup,
                 parse_mode='HTML'
             )
         else:
             await query.edit_message_text(
-                text=welcome_text,
+                text=start_text,
                 reply_markup=reply_markup,
                 parse_mode='HTML'
             )
