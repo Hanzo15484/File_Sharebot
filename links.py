@@ -127,8 +127,8 @@ async def process_link_after_force_sub(update: Update, context: ContextTypes.DEF
         return
 
         # Check if it's a batch link
-    from batch_link import handle_batch_start
-    is_batch = await handle_batch_start(update, context, encoded_id)
+    from batch_link import batchlink_handler
+    is_batch = await batchlink_handler(update, context, encoded_id)
     
     if is_batch:
         return  # Batch link handled
