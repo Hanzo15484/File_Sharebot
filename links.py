@@ -99,11 +99,25 @@ async def start_link_handler(update: Update, context: ContextTypes.DEFAULT_TYPE)
         return
     
     encoded_id = args[0]
+    # Check force subscription first
+    from force_sub import check_force_subscription
+    is_subscribed = await check_force_subscription(update, context, user_id)
+    
+    if not is_subscribed:
+        return  # Force sub message already sent
+    
     file_id = decode_file_id(encoded_id)
     
     if not file_id:
         await update.message.reply_text("❌ Invalid link!")
         return
+
+        # Check if it's a batch link
+    from batch_link import handle_batch_start
+    is_batch = await handle_batch_start(update, context, encoded_id)
+    
+    if is_batch:
+        return  # Batch link handled
     
     links = load_links()
     if encoded_id not in links:
