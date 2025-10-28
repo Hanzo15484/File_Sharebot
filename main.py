@@ -9,7 +9,7 @@ from help import help_handler, button_handler as help_button_handler
 from links import genlink_handler, start_link_handler, link_button_handler
 from settings import settings_handler, settings_button_handler, settings_message_handler
 from batch_link import batchlink_handler, batch_message_handler, handle_batch_start
-from force_sub import force_sub_handler, force_sub_button_handler, forwarded_channel_handler, force_sub_try_again_handler, check_force_subscription
+from force_sub import force_sub_handler, force_sub_button_handler, forwarded_channel_handler, force_sub_try_again_handler
 # Set up logging
 logging.basicConfig(
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
@@ -96,10 +96,13 @@ def main():
 
     # Batch_Link module callbacks
     application.add_handler(MessageHandler(filters.FORWARDED & filters.TEXT, batch_message_handler))
+    application.add_handler(MessageHandler(
+    (filters.TEXT & filters.Regex(r't\.me')) | (filters.FORWARDED & filters.ALL), 
+    batch_message_handler
+))
     application.add_handler(MessageHandler(filters.FORWARDED, forwarded_channel_handler))
     application.add_handler(CallbackQueryHandler(force_sub_button_handler, pattern="^fsub_"))
     application.add_handler(CallbackQueryHandler(force_sub_try_again_handler, pattern="^fsub_try_again"))
-    
     # Help module callbacks  
     application.add_handler(CallbackQueryHandler(help_button_handler, pattern="^help_"))
     
