@@ -99,13 +99,27 @@ async def start_link_handler(update: Update, context: ContextTypes.DEFAULT_TYPE)
         return
     
     encoded_id = args[0]
+
+    context.user_data['original_encoded_id'] = encoded_id
     # Check force subscription first
     from force_sub import check_force_subscription
     is_subscribed = await check_force_subscription(update, context, user_id)
     
     if not is_subscribed:
         return  # Force sub message already sent
+
+    await process_link_after_force_sub(update, context, encoded_id)
     
+async def process_link_after_force_sub(update: Update, context: ContextTypes.DEFAULT_TYPE, encoded_id):
+    """Process the link after user passes force subscription check"""
+    user_id = update.effective_user.id
+    
+    # Check if it's a batch link
+    is_batch = await handle_batch_start(update, context, encoded_id)
+    
+    if is_batch:
+        return  # Batch link handled
+        
     file_id = decode_file_id(encoded_id)
     
     if not file_id:
