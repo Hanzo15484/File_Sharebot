@@ -213,7 +213,7 @@ async def send_force_sub_message(update: Update, context: ContextTypes.DEFAULT_T
     )
     
     buttons = []
-   for channel in channels:
+    for channel in channels:
         channel_url = (
         channel.get("invite_link")
         or (f"https://t.me/{channel['username']}" if channel.get("username") else f"https://t.me/c/{str(channel['id'])[4:]}")
