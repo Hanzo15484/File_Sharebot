@@ -5,6 +5,8 @@ import asyncio
 from datetime import datetime, timedelta
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import ContextTypes, CommandHandler, CallbackQueryHandler
+from batch_link import handle_batch_start
+from force_sub import check_force_subscription
 
 # Load settings
 def load_settings():
@@ -102,7 +104,6 @@ async def start_link_handler(update: Update, context: ContextTypes.DEFAULT_TYPE)
 
     context.user_data['original_encoded_id'] = encoded_id
     # Check force subscription first
-    from force_sub import check_force_subscription
     is_subscribed = await check_force_subscription(update, context, user_id)
     
     if not is_subscribed:
@@ -127,7 +128,6 @@ async def process_link_after_force_sub(update: Update, context: ContextTypes.DEF
         return
 
         # Check if it's a batch link
-    from batch_link import handle_batch_start
     is_batch = await handle_batch_start(update, context, encoded_id)
     
     if is_batch:
