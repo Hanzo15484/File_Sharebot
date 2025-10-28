@@ -1,38 +1,10 @@
-import json
+# force_sub.py
 import os
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import ContextTypes, CommandHandler, MessageHandler, filters
 
-# Load admin data
-def load_admins():
-    try:
-        with open('admins.json', 'r') as f:
-            return json.load(f)
-    except:
-        return [5373577888]
-
-# Load settings
-def load_settings():
-    try:
-        with open('settings.json', 'r') as f:
-            return json.load(f)
-    except:
-        return {
-            "force_sub_image": ""
-        }
-
-# Load force sub channels
-def load_force_sub():
-    try:
-        with open('force_sub.json', 'r') as f:
-            return json.load(f)
-    except:
-        return []
-
-# Save force sub channels
-def save_force_sub(channels):
-    with open('force_sub.json', 'w') as f:
-        json.dump(channels, f, indent=4)
+# Import shared functions
+from shared_functions import load_admins, load_settings, load_force_sub, save_force_sub
 
 async def force_sub_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = update.effective_user.id
@@ -124,8 +96,9 @@ async def forwarded_channel_handler(update: Update, context: ContextTypes.DEFAUL
     if user_id not in admins and user_id != 5373577888:
         return
     
+    # Only process if we're specifically waiting for channel in force sub
     if not context.user_data.get('waiting_for_channel'):
-        return
+        return  # Let batch handler process this forwarded message
     
     message = update.message
     
@@ -282,7 +255,6 @@ async def force_sub_try_again_handler(update: Update, context: ContextTypes.DEFA
     
     if unsubscribed_channels:
         await query.answer("❌ You haven't joined all channels yet!", show_alert=True)
-        # Update the message to show remaining channels
         await send_force_sub_message(update, context, unsubscribed_channels)
         await query.message.delete()
     else:
@@ -290,7 +262,6 @@ async def force_sub_try_again_handler(update: Update, context: ContextTypes.DEFA
         await query.message.delete()
         
         # Get the original start link and process it
-        # We need to extract the original encoded_id from context or store it
         if 'original_encoded_id' in context.user_data:
             encoded_id = context.user_data['original_encoded_id']
             # Import and call the function to process the link
