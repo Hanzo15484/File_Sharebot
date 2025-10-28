@@ -108,7 +108,7 @@ async def settings_button_handler(update: Update, context: ContextTypes.DEFAULT_
         )
         context.user_data['waiting_for'] = 'help_image'
 
-    elif data == "settings_force_sub_image"
+    elif data == "settings_force_sub_image":
         await query.edit_message_text(
            "🔒 **Force Subscribe Image Settings**\n\nɴᴏᴡ sᴇɴᴅ ᴍᴇ ɪᴍᴀɢᴇ ᴛʜᴀᴛ ʏᴏᴜ ᴡᴀɴᴛ ᴛᴏ sᴇᴛ ɪɴ ғᴏʀᴄᴇ sᴜʙsᴄʀɪʙᴇ ᴍᴏᴅᴜʟᴇ",
             reply_markup=InlineKeyboardMarkup([
