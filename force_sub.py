@@ -1,4 +1,5 @@
 import json
+import os
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import ContextTypes, CommandHandler, MessageHandler, filters
 
@@ -9,6 +10,16 @@ def load_admins():
             return json.load(f)
     except:
         return [5373577888]
+
+# Load settings
+def load_settings():
+    try:
+        with open('settings.json', 'r') as f:
+            return json.load(f)
+    except:
+        return {
+            "force_sub_image": ""
+        }
 
 # Load force sub channels
 def load_force_sub():
@@ -32,16 +43,25 @@ async def force_sub_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text("You are not authorized to use this command!")
         return
     
-    keyboard = [
-        [InlineKeyboardButton("➕ Add Channel", callback_data="fsub_add_channel")],
-        [InlineKeyboardButton("❌ Close", callback_data="fsub_close")]
-    ]
+    channels = load_force_sub()
+    
+    keyboard = []
+    if channels:
+        # Add delete buttons for each channel
+        for channel in channels:
+            keyboard.append([
+                InlineKeyboardButton(f"🗑️ {channel['title']}", callback_data=f"fsub_delete_{channel['id']}")
+            ])
+    
+    # Always show Add Channel and Close buttons
+    keyboard.append([InlineKeyboardButton("➕ Add Channel", callback_data="fsub_add_channel")])
+    keyboard.append([InlineKeyboardButton("❌ Close", callback_data="fsub_close")])
+    
     reply_markup = InlineKeyboardMarkup(keyboard)
     
-    channels = load_force_sub()
     if channels:
         channels_text = "\n".join([f"• {channel['title']} (ID: {channel['id']})" for channel in channels])
-        text = f"📢 **Force Subscribe Channels**\n\n{channels_text}\n\nChoose an option:"
+        text = f"📢 **Force Subscribe Channels**\n\n{channels_text}\n\nSelect a channel to delete or add new:"
     else:
         text = "📢 **Force Subscribe Channels**\n\nNo channels added yet.\n\nChoose an option:"
     
@@ -70,6 +90,25 @@ async def force_sub_button_handler(update: Update, context: ContextTypes.DEFAULT
             parse_mode="Markdown"
         )
         context.user_data['waiting_for_channel'] = True
+        
+    elif data.startswith("fsub_delete_"):
+        channel_id = int(data.split("_")[2])
+        channels = load_force_sub()
+        
+        # Find and remove the channel
+        channel_to_delete = None
+        for channel in channels:
+            if channel['id'] == channel_id:
+                channel_to_delete = channel
+                break
+        
+        if channel_to_delete:
+            channels = [ch for ch in channels if ch['id'] != channel_id]
+            save_force_sub(channels)
+            await query.answer(f"✅ {channel_to_delete['title']} removed from force subscribe!", show_alert=True)
+            await force_sub_handler(update, context)
+        else:
+            await query.answer("❌ Channel not found!", show_alert=True)
         
     elif data == "fsub_back":
         await force_sub_handler(update, context)
@@ -123,8 +162,7 @@ async def forwarded_channel_handler(update: Update, context: ContextTypes.DEFAUL
             "id": channel_id,
             "title": channel_title,
             "username": origin.chat.username,
-            "added_by": user_id,
-            "added_at": json.dumps({"$date": {"$numberLong": str(int(message.date.timestamp() * 1000))}})
+            "added_by": user_id
         })
         
         save_force_sub(channels)
@@ -146,7 +184,7 @@ async def forwarded_channel_handler(update: Update, context: ContextTypes.DEFAUL
     else:
         await message.reply_text("⚠️ This forwarded message is not from a channel.")
 
-# Force subscription check function (to be used in links.py)
+# Force subscription check function
 async def check_force_subscription(update: Update, context: ContextTypes.DEFAULT_TYPE, user_id: int):
     channels = load_force_sub()
     
@@ -250,5 +288,11 @@ async def force_sub_try_again_handler(update: Update, context: ContextTypes.DEFA
     else:
         await query.answer("✅ All channels joined! Processing your request...", show_alert=True)
         await query.message.delete()
-        # Continue with the original file sending process
-        # This will be handled in the main start_link_handler
+        
+        # Get the original start link and process it
+        # We need to extract the original encoded_id from context or store it
+        if 'original_encoded_id' in context.user_data:
+            encoded_id = context.user_data['original_encoded_id']
+            # Import and call the function to process the link
+            from links import process_link_after_force_sub
+            await process_link_after_force_sub(update, context, encoded_id)
