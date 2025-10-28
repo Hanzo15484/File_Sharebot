@@ -214,14 +214,17 @@ async def send_force_sub_message(update: Update, context: ContextTypes.DEFAULT_T
     
     buttons = []
     for channel in channels:
-        if channel.get('username'):
-            channel_url = channel.get("invite_link")
-        else:
-            channel_url = f"https://t.me/c/{str(channel['id'])[4:]}"
+        channel_url = (
+            channel.get("invite_link") or 
+            (f"https://t.me/{channel['username']}"
+        if channel.get('username')
+      else:
+           f"https://t.me/c/{str(channel['id'])[4:]}"
+            ))
         
-        buttons.append([InlineKeyboardButton(f"📢 {channel['title']}", url=channel_url)])
+        buttons.append([InlineKeyboardButton(f"{channel['title']}", url=channel_url)])
     
-    buttons.append([InlineKeyboardButton("🔄 Try Again", callback_data="fsub_try_again")])
+    buttons.append([InlineKeyboardButton("ᴛʀʏ ᴀɢᴀɪɴ", callback_data="fsub_try_again")])
     
     keyboard = InlineKeyboardMarkup(buttons)
     
