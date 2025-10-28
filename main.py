@@ -8,7 +8,8 @@ from start import start_handler, button_handler as start_button_handler
 from help import help_handler, button_handler as help_button_handler
 from links import genlink_handler, start_link_handler, link_button_handler
 from settings import settings_handler, settings_button_handler, settings_message_handler
-
+from batch_link import batchlink_handler, batch_message_handler, handle_batch_start
+from force_sub import force_sub_handler, force_sub_button_handler, forwarded_channel_handler, force_sub_try_again_handler, check_force_subscription
 # Set up logging
 logging.basicConfig(
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
@@ -85,12 +86,19 @@ def main():
     application.add_handler(CommandHandler("help", help_handler))
     application.add_handler(CommandHandler("genlink", genlink_handler))
     application.add_handler(CommandHandler("settings", settings_handler))
-    
+    application.add_handler(CommandHandler("batchlink", batchlink_handler))
+    application.add_handler(CommandHandler("fsub", force_sub_handler))
     # Callback query handlers with specific patterns
     print("🔘 Adding callback query handlers...")
     
     # Start module callbacks
     application.add_handler(CallbackQueryHandler(start_button_handler, pattern="^start_"))
+
+    # Batch_Link module callbacks
+    application.add_handler(MessageHandler(filters.FORWARDED & filters.TEXT, batch_message_handler))
+    application.add_handler(MessageHandler(filters.FORWARDED, forwarded_channel_handler))
+    application.add_handler(CallbackQueryHandler(force_sub_button_handler, pattern="^fsub_"))
+    application.add_handler(CallbackQueryHandler(force_sub_try_again_handler, pattern="^fsub_try_again"))
     
     # Help module callbacks  
     application.add_handler(CallbackQueryHandler(help_button_handler, pattern="^help_"))
@@ -102,6 +110,7 @@ def main():
     application.add_handler(CallbackQueryHandler(settings_button_handler, pattern="^settings_"))
     application.add_handler(CallbackQueryHandler(settings_button_handler, pattern="^auto_delete_"))
     application.add_handler(CallbackQueryHandler(settings_button_handler, pattern="^protect_"))
+
     
     # Message handlers for settings (image and text input)
     print("📨 Adding message handlers...")
@@ -134,7 +143,8 @@ def main():
     print("   - Protect content (forwarding restrictions)")
     print("   - Permanent links with base64 encoding")
     print("   - JSON-based data storage")
-    
+    print("   - Batch_Link checked ✅")
+    print("   - Force_Sub checked ✅")
     # Get bot info
     try:
         bot_info = application.bot.get_me()
