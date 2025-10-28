@@ -98,10 +98,9 @@ def main():
     application.add_handler(MessageHandler(filters.FORWARDED & filters.TEXT, batch_message_handler))
     application.add_handler(MessageHandler(
     (filters.TEXT & filters.Regex(r't\.me')) | (filters.FORWARDED & filters.ALL), 
-    batch_message_handler,
-    group=1))
-    application.add_handler(MessageHandler(filters.FORWARDED, forwarded_channel_handler,
-    group=0))
+    batch_message_handler
+    ))
+    application.add_handler(MessageHandler(filters.FORWARDED, forwarded_channel_handler))
     application.add_handler(CallbackQueryHandler(force_sub_button_handler, pattern="^fsub_"))
     application.add_handler(CallbackQueryHandler(force_sub_try_again_handler, pattern="^fsub_try_again"))
     # Help module callbacks  
