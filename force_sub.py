@@ -223,7 +223,7 @@ async def send_force_sub_message(update: Update, context: ContextTypes.DEFAULT_T
              )
             return
        except Exception as e:
-           print(f"Error sending message {e}:")
+         print(f"Error sending message {e}:")
         await context.bot.send_message(
             chat_id=update.effective_chat.id,
             text=text,
