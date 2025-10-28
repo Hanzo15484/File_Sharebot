@@ -93,7 +93,7 @@ async def settings_button_handler(update: Update, context: ContextTypes.DEFAULT_
         await query.edit_message_text(
             "🖼️ **Start Image Settings**\n\nɴᴏᴡ sᴇɴᴅ ᴍᴇ ɪᴍᴀɢᴇ ᴛʜᴀᴛ ʏᴏᴜ ᴡᴀɴᴛ ᴛᴏ sᴇᴛ ɪɴ sᴛᴀʀᴛ ᴍᴏᴅᴜʟᴇ",
             reply_markup=InlineKeyboardMarkup([
-                [InlineKeyboardButton("🔙 Back", callback_data="settings_back")]
+                [InlineKeyboardButton("《 ʙᴀᴄᴋ", callback_data="settings_back")]
             ]),
             parse_mode="Markdown"
         )
@@ -113,7 +113,7 @@ async def settings_button_handler(update: Update, context: ContextTypes.DEFAULT_
         await query.edit_message_text(
            "🔒 **Force Subscribe Image Settings**\n\nɴᴏᴡ sᴇɴᴅ ᴍᴇ ɪᴍᴀɢᴇ ᴛʜᴀᴛ ʏᴏᴜ ᴡᴀɴᴛ ᴛᴏ sᴇᴛ ɪɴ ғᴏʀᴄᴇ sᴜʙsᴄʀɪʙᴇ ᴍᴏᴅᴜʟᴇ",
             reply_markup=InlineKeyboardMarkup([
-                [InlineKeyboardButton("🔙 Back", callback_data="settings_back")]
+                [InlineKeyboardButton("《 ʙᴀᴄᴋ", callback_data="settings_back")]
             ]),
             parse_mode="Markdown"
         )
