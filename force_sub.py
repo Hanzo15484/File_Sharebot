@@ -224,7 +224,7 @@ async def send_force_sub_message(update: Update, context: ContextTypes.DEFAULT_T
           return  # prevent duplicate message sending
       except Exception as e:
           print(f"Error sending force_sub image: {e}")
-        await context.bot.send_message(
+          await context.bot.send_message(
             chat_id=update.effective_chat.id,
             text=text,
             reply_markup=keyboard,
