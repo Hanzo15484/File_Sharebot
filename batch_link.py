@@ -1,57 +1,11 @@
-import os
-import json
-import base64
+# batch_link.py
 import asyncio
 from datetime import datetime
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import ContextTypes, CommandHandler, MessageHandler, filters
 
-# Load admin data
-def load_admins():
-    try:
-        with open('admins.json', 'r') as f:
-            return json.load(f)
-    except:
-        return [5373577888]
-
-# Load settings
-def load_settings():
-    try:
-        with open('settings.json', 'r') as f:
-            return json.load(f)
-    except:
-        return {
-            "auto_delete_time": 10,
-            "protect_content": False
-        }
-
-# Load links data
-def load_links():
-    try:
-        with open('links.json', 'r') as f:
-            return json.load(f)
-    except:
-        return {}
-
-# Save links data
-def save_links(links):
-    with open('links.json', 'w') as f:
-        json.dump(links, f)
-
-# Encode file ID to base64
-def encode_file_id(file_id):
-    encoded = base64.urlsafe_b64encode(file_id.encode()).decode()
-    return encoded.rstrip('=')
-
-# Decode base64 to file ID
-def decode_file_id(encoded_id):
-    padding = 4 - (len(encoded_id) % 4)
-    if padding != 4:
-        encoded_id += '=' * padding
-    try:
-        return base64.urlsafe_b64decode(encoded_id.encode()).decode()
-    except:
-        return None
+# Import shared functions
+from shared_functions import load_admins, load_settings, load_links, save_links, encode_file_id, decode_file_id
 
 async def batchlink_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = update.effective_user.id
@@ -257,143 +211,6 @@ async def generate_batch_links(update: Update, context: ContextTypes.DEFAULT_TYP
         print(f"Error generating batch links: {e}")
         await update.message.reply_text("❌ Error generating batch links!")
 
-async def handle_batch_start(update: Update, context: ContextTypes.DEFAULT_TYPE, encoded_id):
-    links = load_links()
-    
-    if encoded_id not in links:
-        await update.message.reply_text("❌ Batch link expired or not found!")
-        return False
-    
-    batch_data = links[encoded_id]
-    
-    if batch_data.get("type") != "batch":
-        return False
-    
-    chat_id = batch_data["chat_id"]
-    first_msg_id = batch_data["first_message_id"]
-    last_msg_id = batch_data["last_message_id"]
-    channel_title = batch_data.get("channel_title", "Unknown Channel")
-    
-    settings = load_settings()
-    protect_content = settings.get("protect_content", False)
-    auto_delete_time = settings.get("auto_delete_time", 10)
-    
-    # Send all messages in batch
-    warning_msg = None
-    sent_messages = []  # Store message IDs of sent files
-    success_count = 0
-    
-    await update.message.reply_text(f"📦 **Processing Batch Files...**\n\n🔄 Sending {last_msg_id - first_msg_id + 1} files from {channel_title}")
-
-    for msg_id in range(first_msg_id, last_msg_id + 1):
-        try:
-            forwarded_msg = await context.bot.copy_message(
-                chat_id=update.effective_chat.id,
-                from_chat_id=chat_id,
-                message_id=msg_id,
-                protect_content=protect_content
-            )
-            sent_messages.append(forwarded_msg.message_id)
-            success_count += 1
-            
-            # Send warning message only once for the first file
-            if msg_id == first_msg_id and not warning_msg:
-                warning_msg = await update.message.reply_text(
-                    f"> *⚠️ ɪᴍᴘᴏʀᴛᴀɴᴛ\\:*\n\n> *ᴛʜᴇsᴇ ғɪʟᴇs ᴡɪʟʟ ʙᴇ ᴅᴇʟᴇᴛᴇᴅ ɪɴ {auto_delete_time} ᴍɪɴᴜᴛᴇs\\. ᴘʟᴇᴀsᴇ sᴀᴠᴇ ᴏʀ ғᴏʀᴡᴀʀᴅ ᴛʜᴇᴍ ᴛᴏ ʏᴏᴜʀ sᴀᴠᴇᴅ ᴍᴇssᴀɢᴇs ʙᴇғᴏʀᴇ ᴛʜᴇʏ ɢᴇᴛ ʀᴇᴍᴏᴠᴇᴅ\\.*",
-                    parse_mode="MarkdownV2"
-                )
-                
-                # Schedule deletion for all batch messages
-                asyncio.create_task(
-                    delete_batch_messages(
-                        context, 
-                        update.effective_chat.id, 
-                        sent_messages,
-                        warning_msg.message_id if warning_msg else None,
-                        auto_delete_time,
-                        encoded_id
-                    )
-                )
-                
-        except Exception as e:
-            print(f"Error copying message {msg_id}: {e}")
-            continue
-    
-    # Send completion summary
-    if success_count > 0:
-        await update.message.reply_text(f"✅ **Batch Complete!**\n\n📊 Successfully sent {success_count} files out of {last_msg_id - first_msg_id + 1} total files.")
-    else:
-        await update.message.reply_text("❌ No files could be sent from this batch!")
-    
-    return True
-
-async def delete_batch_messages(context, chat_id, sent_message_ids, warning_msg_id, delay_minutes, encoded_id):
-    """Delete all batch messages after delay"""
-    print(f"🕒 Batch deletion scheduled for {delay_minutes} minutes from now")
-    
-    # Wait for the specified time
-    await asyncio.sleep(delay_minutes * 60)
-    
-    print(f"🗑️ Deleting {len(sent_message_ids)} batch messages...")
-    
-    # Delete all sent file messages
-    deleted_count = 0
-    for msg_id in sent_message_ids:
-        try:
-            await context.bot.delete_message(chat_id, msg_id)
-            deleted_count += 1
-            print(f"✅ Deleted file message {msg_id}")
-        except Exception as e:
-            print(f"❌ Error deleting file message {msg_id}: {e}")
-    
-    # Delete warning message
-    if warning_msg_id:
-        try:
-            await context.bot.delete_message(chat_id, warning_msg_id)
-            print(f"✅ Deleted warning message {warning_msg_id}")
-        except Exception as e:
-            print(f"❌ Error deleting warning message {warning_msg_id}: {e}")
-    
-    print(f"✅ Batch deletion completed. Deleted {deleted_count} files.")
-    
-    # Send retrieval message
-    await send_batch_retrieval_message(context, chat_id, encoded_id)
-
-async def send_batch_retrieval_message(context, chat_id, encoded_id):
-    completion_text = (
-        "*✅ ʏᴏᴜʀ ʙᴀᴛᴄʜ ғɪʟᴇs ʜᴀᴠᴇ ʙᴇᴇɴ sᴜᴄᴄᴇssғᴜʟʟʏ ᴅᴇʟᴇᴛᴇᴅ\\!*\n\n"
-        "> *ɪғ ʏᴏᴜ ᴡᴀɴᴛ ᴛᴏ ʀᴇᴛʀɪᴇᴠᴇ ᴛʜᴇᴍ ᴀɢᴀɪɴ, ᴄʟɪᴄᴋ ᴛʜᴇ \"♻️ ᴄʟɪᴄᴋ ʜᴇʀᴇ\" ʙᴜᴛᴛᴏɴ\\. ɪғ ɴᴏᴛ, sɪᴍᴘʟʏ ᴄʟᴏsᴇ ᴛʜɪs ᴍᴇssᴀɢᴇ\\.*"
-    )
-    
-    keyboard = InlineKeyboardMarkup([
-        [
-            InlineKeyboardButton("♻️ ᴄʟɪᴄᴋ ʜᴇʀᴇ", url=f"https://t.me/{context.bot.username}?start={encoded_id}"),
-            InlineKeyboardButton("ᴄʟᴏsᴇ", callback_data=f"link_close")
-        ]
-    ])
-    
-    try:
-        retrieval_msg = await context.bot.send_message(
-            chat_id=chat_id,
-            text=completion_text,
-            reply_markup=keyboard,
-            parse_mode="MarkdownV2"
-        )
-        
-        asyncio.create_task(
-            delete_retrieval_message(context, chat_id, retrieval_msg.message_id, 10)
-        )
-    except Exception as e:
-        print(f"Error sending batch retrieval message: {e}")
-
-async def delete_retrieval_message(context, chat_id, message_id, delay_minutes):
-    """Delete retrieval message after delay"""
-    await asyncio.sleep(delay_minutes * 60)
-    try:
-        await context.bot.delete_message(chat_id, message_id)
-    except:
-        pass
-
 async def batch_button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
     await query.answer()
@@ -409,5 +226,4 @@ async def batch_button_handler(update: Update, context: ContextTypes.DEFAULT_TYP
             batch_link = f"https://t.me/{bot_username}?start={encoded_id}"
             
             await query.answer("Batch link copied to clipboard!", show_alert=True)
-            # You can also send the link as a message
             await query.message.reply_text(f"🔗 **Batch Link:**\n`{batch_link}`", parse_mode="Markdown")
