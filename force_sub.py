@@ -126,8 +126,8 @@ async def forwarded_channel_handler(update: Update, context: ContextTypes.DEFAUL
                     invite_link=new_invite.invite_link
                 except Exception as e:
                   print(f"error fetching invite link {channel_title}, {e}:")
-                except Exception as e:
-                    print(f"error creating new invite link, {e}:")
+        except Except as e:
+            print(f"error in creating new link {e}:")
         # Check if bot is admin in the channel
         try:
             chat_member = await context.bot.get_chat_member(channel_id, context.bot.id)
