@@ -112,6 +112,7 @@ async def forwarded_channel_handler(update: Update, context: ContextTypes.DEFAUL
     if origin.type == "channel":
         channel_id = origin.chat.id
         channel_title = origin.chat.title
+        invite_link = origin.invite_link
         
         # Check if bot is admin in the channel
         try:
@@ -134,6 +135,7 @@ async def forwarded_channel_handler(update: Update, context: ContextTypes.DEFAUL
         channels.append({
             "id": channel_id,
             "title": channel_title,
+            "invite_link": invite_link,
             "username": origin.chat.username,
             "added_by": user_id
         })
@@ -199,7 +201,7 @@ async def send_force_sub_message(update: Update, context: ContextTypes.DEFAULT_T
     buttons = []
     for channel in channels:
         if channel.get('username'):
-            channel_url = f"https://t.me/{channel['username']}"
+            channel_url = channel.get("invite_link")
         else:
             channel_url = f"https://t.me/c/{str(channel['id'])[4:]}"
         
@@ -218,15 +220,9 @@ async def send_force_sub_message(update: Update, context: ContextTypes.DEFAULT_T
                     caption=text,
                     reply_markup=keyboard,
                     parse_mode="Markdown"
-                )
-        except:
-            await context.bot.send_message(
-                chat_id=update.effective_chat.id,
-                text=text,
-                reply_markup=keyboard,
-                parse_mode="Markdown"
-            )
-    else:
+             )
+    return
+    
         await context.bot.send_message(
             chat_id=update.effective_chat.id,
             text=text,
@@ -258,7 +254,7 @@ async def force_sub_try_again_handler(update: Update, context: ContextTypes.DEFA
         await send_force_sub_message(update, context, unsubscribed_channels)
         await query.message.delete()
     else:
-        await query.answer("✅ All channels joined! Processing your request...", show_alert=True)
+        await query.answer("✅ All channels joined! Processing your request...", show_alert=False)
         await query.message.delete()
         
         # Get the original start link and process it
