@@ -65,7 +65,7 @@ async def settings_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         [InlinekeyboardButton("ғᴏʀᴄᴇ sᴜʙ ɪᴍᴀɢᴇ", callback_data="settings_force_sub_image")],
         [InlineKeyboardButton("《 ʙᴀᴄᴋ", callback_data="settings_back"), 
         [InlineKeyboardButton("❌ ᴄʟᴏsᴇ", callback_data="settings_close")]
-    ]
+    ]]
     
     reply_markup = InlineKeyboardMarkup(keyboard)
     
