@@ -218,8 +218,8 @@ async def send_force_sub_message(update: Update, context: ContextTypes.DEFAULT_T
             channel.get("invite_link") or 
             (f"https://t.me/{channel['username']}"
         if channel.get('username')
-      else:
-           f"https://t.me/c/{str(channel['id'])[4:]}"
+       else:
+            f"https://t.me/c/{str(channel['id'])[4:]}"
             ))
         
         buttons.append([InlineKeyboardButton(f"{channel['title']}", url=channel_url)])
