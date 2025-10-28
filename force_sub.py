@@ -112,7 +112,11 @@ async def forwarded_channel_handler(update: Update, context: ContextTypes.DEFAUL
     if origin.type == "channel":
         channel_id = origin.chat.id
         channel_title = origin.chat.title
-        invite_link = origin.invite_link
+
+        try:
+            chat = await context.bot.get_chat(channel_id)
+            invite_link = getattr(chat, "invite_link", None)
+            invite_link = None
         
         # Check if bot is admin in the channel
         try:
