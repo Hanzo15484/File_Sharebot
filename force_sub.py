@@ -212,8 +212,8 @@ async def send_force_sub_message(update: Update, context: ContextTypes.DEFAULT_T
         "ᴀғᴛᴇʀ ᴊᴏɪɴɪɴɢ, ᴄʟɪᴄᴋ ᴛʜᴇ \"🔄 ᴛʀʏ ᴀɢᴀɪɴ\" ʙᴜᴛᴛᴏɴ."
     )
     
-buttons = []
-row = []
+  buttons = []
+  row = []
 
 for index, channel in enumerate(channels[:4], start=1):
     channel_url = (
