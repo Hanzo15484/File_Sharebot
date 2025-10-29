@@ -194,7 +194,6 @@ async def check_force_subscription(update: Update, context: ContextTypes.DEFAULT
             unsubscribed_channels.append(channel)
     
     if unsubscribed_channels:
-        try:
             await asyncio.sleep(0.5)
             await temp_msg.edit_text("❌ ɴᴏᴛ ᴠᴇʀɪғɪᴇᴅ! ᴘʟᴇᴀsᴇ ᴊᴏɪɴ ᴀʟʟ ᴄʜᴀɴɴᴇʟs ᴛᴏ ᴄᴏɴᴛɪɴᴜᴇ")
             await asyncio.sleep(0.7)
@@ -209,6 +208,8 @@ async def check_force_subscription(update: Update, context: ContextTypes.DEFAULT
         await temp_msg.edit_text("ᴘʟᴇᴀsᴇ ᴡᴀɪᴛ....")
         await asyncio.sleep(0.5)
         await temp_msg.delete()
+    except Exception as e:
+        print(f"failed in deleting temp message")
     return True
 
 async def send_force_sub_message(update: Update, context: ContextTypes.DEFAULT_TYPE, channels):
