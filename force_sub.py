@@ -238,10 +238,10 @@ buttons.append([InlineKeyboardButton("🔄 ᴛʀʏ ᴀɢᴀɪɴ", callback_data=
 
 keyboard = InlineKeyboardMarkup(buttons)
 
-if force_sub_image and os.path.exists(force_sub_image):
-    try:
-        with open(force_sub_image, 'rb') as photo:
-            await context.bot.send_photo(
+    if force_sub_image and os.path.exists(force_sub_image):
+        try:
+           with open(force_sub_image, 'rb') as photo:
+             await context.bot.send_photo(
                 chat_id=update.effective_chat.id,
                 photo=photo,
                 caption=text,
