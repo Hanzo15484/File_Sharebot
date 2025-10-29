@@ -250,12 +250,12 @@ if force_sub_image and os.path.exists(force_sub_image):
         )
         return  # prevent duplicate message sending
     except Exception as e:
-          print(f"Error sending force_sub image: {e}")
-          await context.bot.send_message(
-            chat_id=update.effective_chat.id,
-            text=text,
-            reply_markup=keyboard,
-            parse_mode="Markdown"
+           print(f"Error sending force_sub image: {e}")
+           await context.bot.send_message(
+             chat_id=update.effective_chat.id,
+             text=text,
+             reply_markup=keyboard,
+             parse_mode="Markdown"
         )
 
 async def force_sub_try_again_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
