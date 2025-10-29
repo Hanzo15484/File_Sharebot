@@ -180,12 +180,7 @@ async def check_force_subscription(update: Update, context: ContextTypes.DEFAULT
     if not channels:
         return True  # No force sub required
     temp_msg = await update.message.reply_text("ᴄʜᴇᴄᴋɪɴɢ sᴜʙsᴄʀɪᴘᴛɪᴏɴ....")
-    await asyncio.sleep(0.3)
-    await temp_msg.edit_text("ᴠᴇʀɪғɪᴇᴅ ✅")
-    await asyncio.sleep(0.3)
-    await temp_msg.edit_text("ᴘʟᴇᴀsᴇ ᴡᴀɪᴛ....")
-    await asyncio.sleep(0.3)
-    await temp_msg.delete()
+    
     unsubscribed_channels = []
     
     for channel in channels:
@@ -199,13 +194,21 @@ async def check_force_subscription(update: Update, context: ContextTypes.DEFAULT
             unsubscribed_channels.append(channel)
     
     if unsubscribed_channels:
-        # Send force sub message
-        fsub_msg = await update.message.reply_text("ᴄʜᴇᴄᴋɪɴɢ sᴜʙsᴄʀɪᴘᴛɪᴏɴ....")
-        await asyncio.sleep(0.3)
-        await fsub_msg.delete()
+        try:
+            await asyncio.sleep(0.5)
+            await temp_msg.edit_text("❌ ɴᴏᴛ ᴠᴇʀɪғɪᴇᴅ! ᴘʟᴇᴀsᴇ ᴊᴏɪɴ ᴀʟʟ ᴄʜᴀɴɴᴇʟs ᴛᴏ ᴄᴏɴᴛɪɴᴜᴇ")
+            await asyncio.sleep(0.7)
+            await temp_msg.delete()
         await send_force_sub_message(update, context, unsubscribed_channels)
         return False
-    
+        
+    try:
+        await asyncio.sleep(0.3)
+        await temp_msg.edit_text("ᴠᴇʀɪғɪᴇᴅ ✅")
+        await asyncio.sleep(0.4)
+        await temp_msg.edit_text("ᴘʟᴇᴀsᴇ ᴡᴀɪᴛ....")
+        await asyncio.sleep(0.5)
+        await temp_msg.delete()
     return True
 
 async def send_force_sub_message(update: Update, context: ContextTypes.DEFAULT_TYPE, channels):
