@@ -199,8 +199,7 @@ async def check_force_subscription(update: Update, context: ContextTypes.DEFAULT
             await asyncio.sleep(0.7)
             await temp_msg.delete()
             await send_force_sub_message(update, context, unsubscribed_channels)
-        
-          return False
+            return False
         
         await asyncio.sleep(0.3)
         await temp_msg.edit_text("ᴠᴇʀɪғɪᴇᴅ ✅")
