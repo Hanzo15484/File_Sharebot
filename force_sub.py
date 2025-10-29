@@ -245,8 +245,10 @@ async def send_force_sub_message(update: Update, context: ContextTypes.DEFAULT_T
 
     if row:
         buttons.append(row)
-
-    buttons.append([InlineKeyboardButton("🔄 ᴛʀʏ ᴀɢᴀɪɴ", callback_data="fsub_try_again")])
+    encoded_link = context.bot.get("original_encoded_id", "home")
+    bot_username = (await context.bot.get_me()).username
+    
+    buttons.append([InlineKeyboardButton("🔄 ᴛʀʏ ᴀɢᴀɪɴ", url=f"https://t.me/{bot_username}?start={encoded_link}")])
 
     keyboard = InlineKeyboardMarkup(buttons)
 
@@ -269,36 +271,3 @@ async def send_force_sub_message(update: Update, context: ContextTypes.DEFAULT_T
                 reply_markup=keyboard,
                 parse_mode="Markdown"
             )
-async def force_sub_try_again_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    query = update.callback_query
-    await query.answer()
-    
-    user_id = query.from_user.id
-    
-    # Check subscription again
-    channels = load_force_sub()
-    unsubscribed_channels = []
-    
-    for channel in channels:
-        channel_id = channel['id']
-        try:
-            chat_member = await context.bot.get_chat_member(channel_id, user_id)
-            if chat_member.status in ['left', 'kicked']:
-                unsubscribed_channels.append(channel)
-        except:
-            unsubscribed_channels.append(channel)
-    
-    if unsubscribed_channels:
-        await query.answer("❌ You haven't joined all channels yet!", show_alert=True)
-        await send_force_sub_message(update, context, unsubscribed_channels)
-        await query.message.delete()
-    else:
-        await query.answer("✅ All channels joined! Processing your request...", show_alert=False)
-        await query.message.delete()
-        
-        # Get the original start link and process it
-        if 'original_encoded_id' in context.user_data:
-            encoded_id = context.user_data['original_encoded_id']
-            # Import and call the function to process the link
-            from links import process_link_after_force_sub
-            await process_link_after_force_sub(update, context, encoded_id)
