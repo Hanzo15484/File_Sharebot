@@ -246,7 +246,6 @@ async def send_force_sub_message(update: Update, context: ContextTypes.DEFAULT_T
     if row:
         buttons.append(row)
     encoded_link = context.bot.get("original_encoded_id", "home")
-    bot_username = (await context.bot.get_me()).username
     
     buttons.append([InlineKeyboardButton("🔄 ᴛʀʏ ᴀɢᴀɪɴ", url=f"https://t.me/{bot_username}?start={encoded_link}")])
 
