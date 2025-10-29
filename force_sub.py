@@ -180,11 +180,11 @@ async def check_force_subscription(update: Update, context: ContextTypes.DEFAULT
     if not channels:
         return True  # No force sub required
     temp_msg = await update.message.reply_text("ᴄʜᴇᴄᴋɪɴɢ sᴜʙsᴄʀɪᴘᴛɪᴏɴ....")
-    asyncio.sleep(0.3)
+    await asyncio.sleep(0.3)
     await temp_msg.edit_text("ᴠᴇʀɪғɪᴇᴅ ✅")
-    asyncio.sleep(0.3)
+    await asyncio.sleep(0.3)
     await temp_msg.edit_text("ᴘʟᴇᴀsᴇ ᴡᴀɪᴛ....")
-    asyncio.sleep(0.3)
+    await asyncio.sleep(0.3)
     await temp_msg.delete()
     unsubscribed_channels = []
     
