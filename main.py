@@ -100,7 +100,7 @@ def main():
     application.add_handler(MessageHandler(filters.TEXT | filters.FORWARDED, batch_message_handler))  # Batch second
     application.add_handler(CallbackQueryHandler(batch_button_handler, pattern="^copy_batch_"))
     application.add_handler(CallbackQueryHandler(force_sub_button_handler, pattern="^fsub_"))
-    application.add_handler(CallbackQueryHandler(force_sub_try_again_handler, pattern="^fsub_try_again"))
+    application.add_handler(CallbackQueryHandler(force_sub_try_again_handler, pattern="^fsub_try_again$"))
     # Help module callbacks  
     application.add_handler(CallbackQueryHandler(help_button_handler, pattern="^help_"))
     
