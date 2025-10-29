@@ -179,10 +179,10 @@ async def check_force_subscription(update: Update, context: ContextTypes.DEFAULT
     
     if not channels:
         return True  # No force sub required
+
     temp_msg = await update.message.reply_text("ᴄʜᴇᴄᴋɪɴɢ sᴜʙsᴄʀɪᴘᴛɪᴏɴ....")
-    
     unsubscribed_channels = []
-    
+
     for channel in channels:
         channel_id = channel['id']
         try:
@@ -192,27 +192,27 @@ async def check_force_subscription(update: Update, context: ContextTypes.DEFAULT
         except Exception as e:
             print(f"Error checking subscription for channel {channel_id}: {e}")
             unsubscribed_channels.append(channel)
-if unsubscribed_channels:
-    await asyncio.sleep(0.5)
-    await temp_msg.edit_text("❌ ɴᴏᴛ ᴠᴇʀɪғɪᴇᴅ! ᴘʟᴇᴀsᴇ ᴊᴏɪɴ ᴀʟʟ ᴄʜᴀɴɴᴇʟs ᴛᴏ ᴄᴏɴᴛɪɴᴜᴇ")
-    await asyncio.sleep(0.6)
-    await temp_msg.delete()
-    await send_force_sub_message(update, context, unsubscribed_channels)
-    return False
 
-try:
-    await asyncio.sleep(0.3)
-    await temp_msg.edit_text("ᴠᴇʀɪғɪᴇᴅ ✅")
-    await asyncio.sleep(0.4)
-    await temp_msg.edit_text("ᴘʟᴇᴀsᴇ ᴡᴀɪᴛ....")
-    await asyncio.sleep(0.5)
-    await temp_msg.delete()
-except Exception as e:
-    print(f"Error in deleting fsub message: {e}")
+    # ↓↓↓ Everything below must stay indented INSIDE the async function ↓↓↓
+    if unsubscribed_channels:
+        await asyncio.sleep(0.5)
+        await temp_msg.edit_text("❌ ɴᴏᴛ ᴠᴇʀɪғɪᴇᴅ! ᴘʟᴇᴀsᴇ ᴊᴏɪɴ ᴀʟʟ ᴄʜᴀɴɴᴇʟs ᴛᴏ ᴄᴏɴᴛɪɴᴜᴇ")
+        await asyncio.sleep(0.6)
+        await temp_msg.delete()
+        await send_force_sub_message(update, context, unsubscribed_channels)
+        return False
 
-return True
-    
-        
+    try:
+        await asyncio.sleep(0.3)
+        await temp_msg.edit_text("ᴠᴇʀɪғɪᴇᴅ ✅")
+        await asyncio.sleep(0.4)
+        await temp_msg.edit_text("ᴘʟᴇᴀsᴇ ᴡᴀɪᴛ....")
+        await asyncio.sleep(0.5)
+        await temp_msg.delete()
+    except Exception as e:
+        print(f"Error in deleting fsub message: {e}")
+
+    return True
 
 async def send_force_sub_message(update: Update, context: ContextTypes.DEFAULT_TYPE, channels):
     settings = load_settings()
