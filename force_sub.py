@@ -222,7 +222,7 @@ async def send_force_sub_message(update: Update, context: ContextTypes.DEFAULT_T
             or (f"https://t.me/{channel['username']}" if channel.get("username") else f"https://t.me/c/{str(channel['id'])[4:]}")
         )
 
-        row.append(InlineKeyboardButton(f"📢 {channel['title']}", url=channel_url))
+        row.append(InlineKeyboardButton(f"{channel['title']}", url=channel_url))
 
         if index % 2 == 0:
             buttons.append(row)
