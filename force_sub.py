@@ -238,7 +238,7 @@ buttons.append([InlineKeyboardButton("🔄 ᴛʀʏ ᴀɢᴀɪɴ", callback_data=
 
 keyboard = InlineKeyboardMarkup(buttons)
 
-    if force_sub_image and os.path.exists(force_sub_image):
+if force_sub_image and os.path.exists(force_sub_image):
         try:
             with open(force_sub_image, 'rb') as photo:
                 await context.bot.send_photo(
