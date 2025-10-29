@@ -2,7 +2,7 @@
 import os
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import ContextTypes, CommandHandler, MessageHandler, filters
-
+import asyncio
 # Import shared functions
 from shared_functions import load_admins, load_settings, load_force_sub, save_force_sub
 
