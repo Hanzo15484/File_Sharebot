@@ -245,7 +245,7 @@ async def send_force_sub_message(update: Update, context: ContextTypes.DEFAULT_T
 
     if row:
         buttons.append(row)
-    encoded_link = context.bot.get("original_encoded_id", "home")
+    encoded_link = context.user_data.get("original_encoded_id", "home")
     
     buttons.append([InlineKeyboardButton("🔄 ᴛʀʏ ᴀɢᴀɪɴ", url=f"https://t.me/Rimuru_filebot?start={encoded_link}")])
 
