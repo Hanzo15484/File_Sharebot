@@ -240,17 +240,25 @@ keyboard = InlineKeyboardMarkup(buttons)
 
     if force_sub_image and os.path.exists(force_sub_image):
         try:
-           with open(force_sub_image, 'rb') as photo:
-             await context.bot.send_photo(
+            with open(force_sub_image, 'rb') as photo:
+                await context.bot.send_photo(
+                    chat_id=update.effective_chat.id,
+                    photo=photo,
+                    caption=text,
+                    reply_markup=keyboard,
+                    parse_mode="Markdown"
+                )
+            return
+        except Exception as e:
+            print(f"Error sending photo: {e}")
+            await context.bot.send_message(
                 chat_id=update.effective_chat.id,
-                photo=photo,
-                caption=text,
+                text=text,
                 reply_markup=keyboard,
                 parse_mode="Markdown"
             )
-        return  # prevent duplicate message sending
-    except Exception as e:
-        print(f"Error sending force_sub image: {e}")
+            
+    
 
 async def force_sub_try_again_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
