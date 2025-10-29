@@ -212,33 +212,30 @@ async def send_force_sub_message(update: Update, context: ContextTypes.DEFAULT_T
         "ᴀғᴛᴇʀ ᴊᴏɪɴɪɴɢ, ᴄʟɪᴄᴋ ᴛʜᴇ \"🔄 ᴛʀʏ ᴀɢᴀɪɴ\" ʙᴜᴛᴛᴏɴ."
     )
     
-  buttons = []
-  row = []
+    # ✅ Everything below is indented INSIDE the async function
+    buttons = []
+    row = []
 
-for index, channel in enumerate(channels[:4], start=1):
-    channel_url = (
-        channel.get("invite_link")
-        or (f"https://t.me/{channel['username']}" if channel.get("username") else f"https://t.me/c/{str(channel['id'])[4:]}")
-    )
+    for index, channel in enumerate(channels[:4], start=1):
+        channel_url = (
+            channel.get("invite_link")
+            or (f"https://t.me/{channel['username']}" if channel.get("username") else f"https://t.me/c/{str(channel['id'])[4:]}")
+        )
 
-    # ✅ Add button to current row
-    row.append(InlineKeyboardButton(f"📢 {channel['title']}", url=channel_url))
+        row.append(InlineKeyboardButton(f"📢 {channel['title']}", url=channel_url))
 
-    # ✅ Every 2 buttons → start a new row
-    if index % 2 == 0:
+        if index % 2 == 0:
+            buttons.append(row)
+            row = []
+
+    if row:
         buttons.append(row)
-        row = []
 
-# ✅ Add last row if odd number of channels
-if row:
-    buttons.append(row)
+    buttons.append([InlineKeyboardButton("🔄 ᴛʀʏ ᴀɢᴀɪɴ", callback_data="fsub_try_again")])
 
-# ✅ Add Try Again button
-buttons.append([InlineKeyboardButton("🔄 ᴛʀʏ ᴀɢᴀɪɴ", callback_data="fsub_try_again")])
+    keyboard = InlineKeyboardMarkup(buttons)
 
-keyboard = InlineKeyboardMarkup(buttons)
-
-if force_sub_image and os.path.exists(force_sub_image):
+    if force_sub_image and os.path.exists(force_sub_image):
         try:
             with open(force_sub_image, 'rb') as photo:
                 await context.bot.send_photo(
@@ -257,9 +254,6 @@ if force_sub_image and os.path.exists(force_sub_image):
                 reply_markup=keyboard,
                 parse_mode="Markdown"
             )
-            
-    
-
 async def force_sub_try_again_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
     await query.answer()
