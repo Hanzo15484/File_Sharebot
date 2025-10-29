@@ -9,7 +9,7 @@ from help import help_handler, button_handler as help_button_handler
 from links import genlink_handler, start_link_handler, link_button_handler
 from settings import settings_handler, settings_button_handler, settings_message_handler
 from batch_link import batchlink_handler, batch_message_handler, batch_button_handler
-from force_sub import force_sub_handler, force_sub_button_handler, forwarded_channel_handler, force_sub_try_again_handler, check_force_subscription
+from force_sub import force_sub_handler, force_sub_button_handler, forwarded_channel_handler, check_force_subscription
 # Set up logging
 logging.basicConfig(
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
