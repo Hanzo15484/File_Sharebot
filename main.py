@@ -114,10 +114,11 @@ def main():
     
     # Message handlers for settings (image and text input)
     print("📨 Adding message handlers...")
-    application.add_handler(MessageHandler(
-        filters.PHOTO | (filters.TEXT & ~filters.COMMAND), 
-        settings_message_handler
-    ))
+    # For handling images (start/help/force sub)
+    application.add_handler(MessageHandler(filters.PHOTO, settings_message_handler))
+
+    # For handling text updates (start/help/db channel)
+    application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, settings_message_handler))
     
     # Error handler
     async def error_handler(update: object, context):
