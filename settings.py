@@ -250,9 +250,9 @@ async def settings_message_handler(update: Update, context: ContextTypes.DEFAULT
             await update.message.reply_text("❌ Please send a valid image!")
             
     elif waiting_for in ['start_text', 'help_text']:
-        new_text = update.message.text
-        settings[waiting_for] = new_text
-        save_settings(settings)
+         new_text = update.message.text
+         settings[waiting_for] = new_text
+         save_settings(settings)
         
           await update.message.reply_text(f"✅ {waiting_for.replace('_', ' ').title()} has been updated successfully!")
           context.user_data.pop('waiting_for', None)
