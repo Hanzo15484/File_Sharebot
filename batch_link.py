@@ -114,7 +114,7 @@ async def extract_chat_message_info(update: Update, context: ContextTypes.DEFAUL
         origin = message.forward_origin
         if origin.type == "channel":
             chat_id = origin.chat.id
-            message_id = message.forward_from_message_id
+            message_id = origin.message_id
             channel_title = origin.chat.title
             print(f"📨 Forwarded from channel: {channel_title}, Chat ID: {chat_id}, Message ID: {message_id}")
             return chat_id, message_id, channel_title
