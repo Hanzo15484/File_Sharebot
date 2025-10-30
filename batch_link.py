@@ -110,7 +110,7 @@ async def extract_chat_message_info(update: Update, context: ContextTypes.DEFAUL
     MANUAL_BATCH_CHANNEL_ID = -1002383659001  # your channel ID
 
     # Case 1: Forwarded message with proper origin
-    if hasattr(message, 'forward_origin') and message.forward_origin:
+    if hasattr(message, "forward_origin") and message.forward_origin:
         origin = message.forward_origin
         if origin.type == "channel":
             chat_id = origin.chat.id
@@ -120,16 +120,16 @@ async def extract_chat_message_info(update: Update, context: ContextTypes.DEFAUL
             return chat_id, message_id, channel_title
 
     # Case 2: Message link (public/private)
-    elif message.text and 't.me' in message.text:
+    elif message.text and "t.me" in message.text:
         try:
-            if '/c/' in message.text:
-                parts = message.text.split('/')
+            if "/c/" in message.text:
+                parts = message.text.split("/")
                 chat_id = int("-100" + parts[-2])  # ensure proper format
                 message_id = int(parts[-1])
                 chat = await context.bot.get_chat(chat_id)
                 return chat.id, message_id, chat.title
             else:
-                parts = message.text.split('/')
+                parts = message.text.split("/")
                 if len(parts) >= 2:
                     channel_username = parts[-2]
                     message_id = int(parts[-1])
@@ -139,16 +139,18 @@ async def extract_chat_message_info(update: Update, context: ContextTypes.DEFAUL
             print(f"Error parsing message link: {e}")
             return None, None, None
 
-    # ✅ New (use manual ID only for forwarded messages)
-   elif message.forward_origin and hasattr(message.forward_origin, "message_id"):
+    # Case 3: Use manual batch channel only for forwarded messages
+    elif hasattr(message, "forward_origin") and message.forward_origin:
         origin = message.forward_origin
-    if origin.type == "channel":
-        chat_id = MANUAL_BATCH_CHANNEL_ID
-        message_id = origin.message_id
-        channel_title = "Batch Channel"
-        print(f"⚙️ Using manual batch channel for forwarded message: {message_id}")
-        return chat_id, message_id, channel_title
+        if origin.type == "channel":
+            chat_id = MANUAL_BATCH_CHANNEL_ID
+            message_id = origin.message_id
+            channel_title = "Batch Channel"
+            print(f"⚙️ Using manual batch channel for forwarded message: {message_id}")
+            return chat_id, message_id, channel_title
 
+    print("❌ Could not extract chat and message ID")
+    return None, None, None
 async def check_bot_admin(context, chat_id):
     """Check if bot is admin in the channel"""
     try:
