@@ -78,16 +78,18 @@ def main():
     print("🤖 Creating bot application...")
     application = (Application.builder()
     .token(TOKEN)
-    .read_timeout(15)
-    .write_timeout(30)
-    .connect_timeout(20)
-    .pool_timeout(20)
+    .read_timeout(10)
+    .write_timeout(20)
+    .connect_timeout(10)
+    .pool_timeout(10)
+    .concurrent_updates(True)
+    .get_updates_request_timeout(30)
     .build())
 
     if hasattr(application.updater, 'job_queue') and hasattr(application.updater.job_queue, 'scheduler'):
             application.updater.job_queue.scheduler.configure(
                 timezone="UTC",
-                max_workers=3  # Reduce worker threads for Termux
+                max_workers=4 # Reduce worker threads for Termux
             )
     # Add command handlers
     print("📝 Adding command handlers...")
