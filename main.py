@@ -11,6 +11,7 @@ from settings import settings_handler, settings_button_handler, settings_message
 from batch_link import batchlink_handler, batch_message_handler, batch_button_handler
 from force_sub import force_sub_handler, force_sub_button_handler, forwarded_channel_handler, check_force_subscription
 from broadcast import register_broadcast_handlers
+from ban import is_banned, ban_user, unban_user
 # Set up logging
 logging.basicConfig(
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
@@ -93,7 +94,8 @@ def main():
             )
     # Add command handlers
     print("📝 Adding command handlers...")
-    
+    application.add_handler(MessageHandler(filters.ALL, is_banned),
+    group=0)
     # Command handlers
     application.add_handler(CommandHandler("start", start_link_handler))  # Override start handler for link support
     application.add_handler(CommandHandler("help", help_handler))
@@ -101,6 +103,8 @@ def main():
     application.add_handler(CommandHandler("settings", settings_handler))
     application.add_handler(CommandHandler("batchlink", batchlink_handler))
     application.add_handler(CommandHandler("fsub", force_sub_handler))
+    application.add_handler(CommandHandler("ban", ban_user))
+    application.add_handler(CommandHandler("unban", unban_user))                  
     # Callback query handlers with specific patterns
     print("🔘 Adding callback query handlers...")
 
