@@ -228,32 +228,36 @@ async def batch_button_handler(update: Update, context: ContextTypes.DEFAULT_TYP
 
 async def handle_batch_start(update: Update, context: ContextTypes.DEFAULT_TYPE, encoded_id):
     links = load_links()
-    
+
     if encoded_id not in links:
         await update.message.reply_text("❌ Batch link expired or not found!")
         return False
-    
+
     batch_data = links[encoded_id]
-    
+
     if batch_data.get("type") != "batch":
         return False
-    
+
     chat_id = batch_data["chat_id"]
     first_msg_id = batch_data["first_message_id"]
     last_msg_id = batch_data["last_message_id"]
     channel_title = batch_data.get("channel_title", "Unknown Channel")
-    
+
     settings = load_settings()
     protect_content = settings.get("protect_content", False)
     auto_delete_time = settings.get("auto_delete_time", 10)
-    
-    # Send all messages in batch
-    warning_msg = None
-    sent_messages = []  # Store message IDs of sent files
-    success_count = 0
-    
-    await update.message.reply_text(f"📦 **Processing Batch Files...**\n\n🔄 Sending {last_msg_id - first_msg_id + 1} files from {channel_title}, show_alert=False")
 
+    # Notify user that batch is starting
+    await update.message.reply_text(
+        f"📦 **Processing Batch Files...**\n\n"
+        f"🔄 Sending {last_msg_id - first_msg_id + 1} files from {channel_title}",
+        parse_mode="Markdown"
+    )
+
+    sent_messages = []  # Store sent file message IDs
+    success_count = 0
+
+    # --- Send all files in range ---
     for msg_id in range(first_msg_id, last_msg_id + 1):
         try:
             forwarded_msg = await context.bot.copy_message(
@@ -264,27 +268,41 @@ async def handle_batch_start(update: Update, context: ContextTypes.DEFAULT_TYPE,
             )
             sent_messages.append(forwarded_msg.message_id)
             success_count += 1
-            
-            # Send warning message only once for the first file
-            warning_msg = await update.message.reply_text(f"> *⚠️ ɪᴍᴘᴏʀᴛᴀɴᴛ\\:*\n\n"
-            f"> *ᴛʜᴇsᴇ ғɪʟᴇs ᴡɪʟʟ ʙᴇ ᴅᴇʟᴇᴛᴇᴅ ɪɴ {auto_delete_time} ᴍɪɴᴜᴛᴇs\\. "
-            f"ᴘʟᴇᴀsᴇ sᴀᴠᴇ ᴏʀ ғᴏʀᴡᴀʀᴅ ᴛʜᴇᴍ ᴛᴏ ʏᴏᴜʀ sᴀᴠᴇᴅ ᴍᴇssᴀɢᴇs ʙᴇғᴏʀᴇ ᴛʜᴇʏ ɢᴇᴛ ʀᴇᴍᴏᴠᴇᴅ\\.*",
-            parse_mode="MarkdownV2")
-                # Schedule deletion for all batch messages
-                asyncio.create_task(
-                    delete_batch_messages(
-                        context, 
-                        update.effective_chat.id, 
-                        sent_messages,
-                        warning_msg.message_id if warning_msg else None,
-                        auto_delete_time,
-                        encoded_id
-                    )
-                )
-                
+
         except Exception as e:
             print(f"Error copying message {msg_id}: {e}")
             continue
+
+    # --- After all files sent, show completion summary ---
+    if success_count > 0:
+        await update.message.reply_text(
+            f"✅ **Batch Complete!**\n\n"
+            f"📊 Successfully sent {success_count} files out of "
+            f"{last_msg_id - first_msg_id + 1} total files.",
+            parse_mode="Markdown"
+        )
+
+        # --- Send warning message at the END ---
+        warning_msg = await update.message.reply_text(
+            f"> *⚠️ ɪᴍᴘᴏʀᴛᴀɴᴛ\\:*\n\n"
+            f"> *ᴛʜᴇsᴇ ғɪʟᴇs ᴡɪʟʟ ʙᴇ ᴅᴇʟᴇᴛᴇᴅ ɪɴ {auto_delete_time} ᴍɪɴᴜᴛᴇs\\. "
+            f"ᴘʟᴇᴀsᴇ sᴀᴠᴇ ᴏʀ ғᴏʀᴡᴀʀᴅ ᴛʜᴇᴍ ᴛᴏ ʏᴏᴜʀ sᴀᴠᴇᴅ ᴍᴇssᴀɢᴇs ʙᴇғᴏʀᴇ ᴛʜᴇʏ ɢᴇᴛ ʀᴇᴍᴏᴠᴇᴅ\\.*",
+            parse_mode="MarkdownV2"
+        )
+
+        # --- Schedule deletion after sending warning ---
+        asyncio.create_task(
+            delete_batch_messages(
+                context,
+                update.effective_chat.id,
+                sent_messages,
+                warning_msg.message_id if warning_msg else None,
+                auto_delete_time,
+                encoded_id,
+            )
+        )
+    else:
+        await update.message.reply_text("❌ No files could be sent from this batch!")
     
     # Send completion summary
     if success_count > 0:
