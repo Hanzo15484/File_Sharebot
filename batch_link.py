@@ -147,7 +147,20 @@ async def extract_chat_message_info(update: Update, context: ContextTypes.DEFAUL
     print("❌ Could not extract chat and message ID")
     return None, None, None
 
-
+async def check_bot_admin(context, chat_id):
+    """Check if bot is admin in the channel"""
+    try:
+        chat_member = await context.bot.get_chat_member(chat_id, context.bot.id)
+        if chat_member.status in ['administrator', 'creator']:
+            print(f"✅ Bot is admin in channel {chat_id}")
+            return True
+        else:
+            print(f"❌ Bot is NOT admin in channel {chat_id}")
+            return False
+    except Exception as e:
+        print(f"Error checking bot admin status: {e}")
+        return False
+        
 async def generate_batch_links(update: Update, context: ContextTypes.DEFAULT_TYPE, chat_id, first_msg_id, last_msg_id, channel_title):
     try:
         settings = load_settings()
