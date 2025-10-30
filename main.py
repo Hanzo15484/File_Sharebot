@@ -69,11 +69,6 @@ def main():
         print("Example: export BOT_TOKEN='your_bot_token_here'")
         return
 
-    if hasattr(application.updater, 'job_queue') and hasattr(application.updater.job_queue, 'scheduler'):
-            application.updater.job_queue.scheduler.configure(
-                timezone="UTC",
-                max_workers=3  # Reduce worker threads for Termux
-            )
     # Verify token format
     if ':' not in TOKEN:
         print("❌ ERROR: Invalid bot token format")
@@ -88,7 +83,12 @@ def main():
     .connect_timeout(20)
     .pool_timeout(20)
     .build())
-    
+
+    if hasattr(application.updater, 'job_queue') and hasattr(application.updater.job_queue, 'scheduler'):
+            application.updater.job_queue.scheduler.configure(
+                timezone="UTC",
+                max_workers=3  # Reduce worker threads for Termux
+            )
     # Add command handlers
     print("📝 Adding command handlers...")
     
