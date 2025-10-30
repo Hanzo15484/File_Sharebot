@@ -66,12 +66,12 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     
     if data == "start_about":
         about_text = (
-            "Bot Name - File Store Bot\n"
-            "Bot Username - @YourBotUsername\n"
-            "Python Version - 3.8+\n"
-            "Database - JSON\n"
-            "Owner - 5373577888\n\n"
-            "This bot is only for Anime Fable"
+            "*ʙᴏᴛ ɴᴀᴍᴇ* - Rɪᴍᴜʀᴜ Tᴇᴍᴘᴇsᴛ"
+            "*ʙᴏᴛ ᴜsᴇʀɴᴀᴍᴇ* - @Rimuru_filebot"
+            "*ᴘʏᴛʜᴏɴ ᴠᴇʀsɪᴏɴ* - 3.8+"
+            "*ᴅᴀᴛᴀʙᴀsᴇ* - ᴊsᴏɴ"
+            "*ᴏᴡɴᴇʀ* - [ʜᴀɴᴢᴏ𒆜](url-https://t.me/quarel7)"
+            "*ᴛʜɪs ʙᴏᴛ ɪs ᴏɴʟʏ ғᴏʀ ᴀɴɪᴍᴇ ғᴀʙʟᴇ*"
         )
         
         keyboard = [
@@ -84,7 +84,8 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         if query.message.photo:
             await query.edit_message_caption(
                 caption=about_text,
-                reply_markup=reply_markup
+                reply_markup=reply_markup,
+                parse_mode="MarkdownV2",
             )
         else:
             await query.edit_message_text(
