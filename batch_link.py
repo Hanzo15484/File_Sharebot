@@ -139,13 +139,15 @@ async def extract_chat_message_info(update: Update, context: ContextTypes.DEFAUL
             print(f"Error parsing message link: {e}")
             return None, None, None
 
-    # Case 3: If no forward info, use manual channel ID
-    elif message.message_id:
-        print(f"⚙️ Using manual channel ID fallback: {MANUAL_BATCH_CHANNEL_ID}")
-        return MANUAL_BATCH_CHANNEL_ID, message.message_id, "Batch Channel"
-
-    print("❌ Could not extract chat and message ID")
-    return None, None, None
+    # ✅ New (use manual ID only for forwarded messages)
+   elif message.forward_origin and hasattr(message.forward_origin, "message_id"):
+        origin = message.forward_origin
+    if origin.type == "channel":
+        chat_id = MANUAL_BATCH_CHANNEL_ID
+        message_id = origin.message_id
+        channel_title = "Batch Channel"
+        print(f"⚙️ Using manual batch channel for forwarded message: {message_id}")
+        return chat_id, message_id, channel_title
 
 async def check_bot_admin(context, chat_id):
     """Check if bot is admin in the channel"""
@@ -248,7 +250,7 @@ async def handle_batch_start(update: Update, context: ContextTypes.DEFAULT_TYPE,
     sent_messages = []  # Store message IDs of sent files
     success_count = 0
     
-    await update.message.reply_text(f"📦 **Processing Batch Files...**\n\n🔄 Sending {last_msg_id - first_msg_id + 1} files from {channel_title}")
+    await update.message.reply_text(f"📦 **Processing Batch Files...**\n\n🔄 Sending {last_msg_id - first_msg_id + 1} files from {channel_title}, show_alert=False")
 
     for msg_id in range(first_msg_id, last_msg_id + 1):
         try:
@@ -262,12 +264,10 @@ async def handle_batch_start(update: Update, context: ContextTypes.DEFAULT_TYPE,
             success_count += 1
             
             # Send warning message only once for the first file
-            if msg_id == first_msg_id and not warning_msg:
-                warning_msg = await update.message.reply_text(
-                    f"> *⚠️ ɪᴍᴘᴏʀᴛᴀɴᴛ\\:*\n\n> *ᴛʜᴇsᴇ ғɪʟᴇs ᴡɪʟʟ ʙᴇ ᴅᴇʟᴇᴛᴇᴅ ɪɴ {auto_delete_time} ᴍɪɴᴜᴛᴇs\\. ᴘʟᴇᴀsᴇ sᴀᴠᴇ ᴏʀ ғᴏʀᴡᴀʀᴅ ᴛʜᴇᴍ ᴛᴏ ʏᴏᴜʀ sᴀᴠᴇᴅ ᴍᴇssᴀɢᴇs ʙᴇғᴏʀᴇ ᴛʜᴇʏ ɢᴇᴛ ʀᴇᴍᴏᴠᴇᴅ\\.*",
-                    parse_mode="MarkdownV2"
-                )
-                
+                warning_msg = await update.message.reply_text(f"> *⚠️ ɪᴍᴘᴏʀᴛᴀɴᴛ\\:*\n\n"
+            f"> *ᴛʜᴇsᴇ ғɪʟᴇs ᴡɪʟʟ ʙᴇ ᴅᴇʟᴇᴛᴇᴅ ɪɴ {auto_delete_time} ᴍɪɴᴜᴛᴇs\\. "
+            f"ᴘʟᴇᴀsᴇ sᴀᴠᴇ ᴏʀ ғᴏʀᴡᴀʀᴅ ᴛʜᴇᴍ ᴛᴏ ʏᴏᴜʀ sᴀᴠᴇᴅ ᴍᴇssᴀɢᴇs ʙᴇғᴏʀᴇ ᴛʜᴇʏ ɢᴇᴛ ʀᴇᴍᴏᴠᴇᴅ\\.*",
+            parse_mode="MarkdownV2")
                 # Schedule deletion for all batch messages
                 asyncio.create_task(
                     delete_batch_messages(
@@ -286,7 +286,7 @@ async def handle_batch_start(update: Update, context: ContextTypes.DEFAULT_TYPE,
     
     # Send completion summary
     if success_count > 0:
-        await update.message.reply_text(f"✅ **Batch Complete!**\n\n📊 Successfully sent {success_count} files out of {last_msg_id - first_msg_id + 1} total files.")
+        await update.message.reply_text(f"✅ **Batch Complete!**\n\n📊 Successfully sent {success_count} files out of {last_msg_id - first_msg_id + 1} total files., show_alert=False")
     else:
         await update.message.reply_text("❌ No files could be sent from this batch!")
     
