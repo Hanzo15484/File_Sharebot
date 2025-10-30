@@ -248,11 +248,6 @@ async def handle_batch_start(update: Update, context: ContextTypes.DEFAULT_TYPE,
     auto_delete_time = settings.get("auto_delete_time", 10)
 
     # Notify user that batch is starting
-    await update.message.reply_text(
-        f"📦 **Processing Batch Files...**\n\n"
-        f"🔄 Sending {last_msg_id - first_msg_id + 1} files from {channel_title}",
-        parse_mode="Markdown"
-    )
 
     sent_messages = []  # Store sent file message IDs
     success_count = 0
@@ -275,12 +270,7 @@ async def handle_batch_start(update: Update, context: ContextTypes.DEFAULT_TYPE,
 
     # --- After all files sent, show completion summary ---
     if success_count > 0:
-        await update.message.reply_text(
-            f"✅ **Batch Complete!**\n\n"
-            f"📊 Successfully sent {success_count} files out of "
-            f"{last_msg_id - first_msg_id + 1} total files.",
-            parse_mode="Markdown"
-        )
+        
 
         # --- Send warning message at the END ---
         warning_msg = await update.message.reply_text(
@@ -306,9 +296,9 @@ async def handle_batch_start(update: Update, context: ContextTypes.DEFAULT_TYPE,
     
     # Send completion summary
     if success_count > 0:
-        await update.message.reply_text(f"✅ **Batch Complete!**\n\n📊 Successfully sent {success_count} files out of {last_msg_id - first_msg_id + 1} total files., show_alert=False")
+          print(f"✅ **Batch Complete!**\n\n📊 Successfully sent {success_count} files out of {last_msg_id - first_msg_id + 1} total files., show_alert=False")
     else:
-        await update.message.reply_text("❌ No files could be sent from this batch!")
+        print("❌ No files could be sent from this batch!")
     
     return True
 
