@@ -257,6 +257,8 @@ async def settings_message_handler(update: Update, context: ContextTypes.DEFAULT
         await update.message.reply_text(f"✅ {waiting_for.replace('_', ' ').title()} has been updated successfully!")
         context.user_data.pop('waiting_for', None)
         await settings_handler(update, context)
+    else:
+        await update.message.reply_text("Failed in replacing Previous text")
     elif waiting_for == 'force_sub_image':
         if update.message.photo:
             # Get the largest photo
