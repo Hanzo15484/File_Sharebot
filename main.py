@@ -96,8 +96,10 @@ def main():
 
     # Batch_Link module callbacks
     # Message handlers - order matters!
-    application.add_handler(MessageHandler(filters.FORWARDED, forwarded_channel_handler))  # Force sub first
-    application.add_handler(MessageHandler(filters.TEXT | filters.FORWARDED, batch_message_handler))  # Batch second
+    application.add_handler(MessageHandler(filters.FORWARDED, forwarded_channel_handler),
+    group=1)  # Force sub first
+    application.add_handler(MessageHandler(filters.TEXT | filters.FORWARDED, batch_message_handler),
+    group=2)  # Batch second
     application.add_handler(CallbackQueryHandler(batch_button_handler, pattern="^copy_batch_"))
     application.add_handler(CallbackQueryHandler(force_sub_button_handler, pattern="^fsub_"))
     # Help module callbacks  
@@ -115,10 +117,12 @@ def main():
     # Message handlers for settings (image and text input)
     print("📨 Adding message handlers...")
     # For handling images (start/help/force sub)
-    application.add_handler(MessageHandler(filters.PHOTO, settings_message_handler))
+    application.add_handler(MessageHandler(filters.PHOTO, settings_message_handler),
+    group=0)
 
     # For handling text updates (start/help/db channel)
-    application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, settings_message_handler))
+    application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, settings_message_handler),
+    group=0)
     
     # Error handler
     async def error_handler(update: object, context):
