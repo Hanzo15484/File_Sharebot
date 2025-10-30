@@ -13,7 +13,7 @@ from force_sub import force_sub_handler, force_sub_button_handler, forwarded_cha
 # Set up logging
 logging.basicConfig(
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-    level=logging.INFO
+    level=logging.WARNING
 )
 
 # Load admin data for verification
@@ -68,7 +68,12 @@ def main():
         print("❌ ERROR: Please set BOT_TOKEN environment variable")
         print("Example: export BOT_TOKEN='your_bot_token_here'")
         return
-    
+
+    if hasattr(application.updater, 'job_queue') and hasattr(application.updater.job_queue, 'scheduler'):
+            application.updater.job_queue.scheduler.configure(
+                timezone="UTC",
+                max_workers=3  # Reduce worker threads for Termux
+            )
     # Verify token format
     if ':' not in TOKEN:
         print("❌ ERROR: Invalid bot token format")
@@ -76,7 +81,13 @@ def main():
     
     # Create application
     print("🤖 Creating bot application...")
-    application = Application.builder().token(TOKEN).build()
+    application = (Application.builder()
+    .token(TOKEN)
+    .read_timeout(15)
+    .write_timeout(30)
+    .connect_timeout(20)
+    .pool_timeout(20)
+    .build())
     
     # Add command handlers
     print("📝 Adding command handlers...")
