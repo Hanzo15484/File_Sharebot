@@ -105,8 +105,11 @@ async def batch_message_handler(update: Update, context: ContextTypes.DEFAULT_TY
 
 async def extract_chat_message_info(update: Update, context: ContextTypes.DEFAULT_TYPE):
     message = update.message
-    
-    # Check if message is forwarded from a channel using forward_origin
+
+    # --- Manually set your batch channel ID ---
+    MANUAL_BATCH_CHANNEL_ID = -1002383659001  # your channel ID
+
+    # Case 1: Forwarded message with proper origin
     if hasattr(message, 'forward_origin') and message.forward_origin:
         origin = message.forward_origin
         if origin.type == "channel":
@@ -115,57 +118,35 @@ async def extract_chat_message_info(update: Update, context: ContextTypes.DEFAUL
             channel_title = origin.chat.title
             print(f"📨 Forwarded from channel: {channel_title}, Chat ID: {chat_id}, Message ID: {message_id}")
             return chat_id, message_id, channel_title
-    
-    # Check if message contains a text with channel link
+
+    # Case 2: Message link (public/private)
     elif message.text and 't.me' in message.text:
         try:
-            # Extract from message link format: https://t.me/channel/123 or https://t.me/c/1234567890/123
             if '/c/' in message.text:
-                # Private channel link format: https://t.me/c/1234567890/123
                 parts = message.text.split('/')
-                chat_id = int(parts[-2])
+                chat_id = int("-100" + parts[-2])  # ensure proper format
                 message_id = int(parts[-1])
-                # Get channel info
-                try:
-                    chat = await context.bot.get_chat(chat_id)
-                    return chat.id, message_id, chat.title
-                except Exception as e:
-                    print(f"Error getting chat from ID: {e}")
-                    return None, None, None
+                chat = await context.bot.get_chat(chat_id)
+                return chat.id, message_id, chat.title
             else:
-                # Public channel link format: https://t.me/channel_username/123
                 parts = message.text.split('/')
                 if len(parts) >= 2:
                     channel_username = parts[-2]
                     message_id = int(parts[-1])
-                    
-                    # Get channel ID from username
-                    try:
-                        chat = await context.bot.get_chat(f"@{channel_username}")
-                        return chat.id, message_id, chat.title
-                    except Exception as e:
-                        print(f"Error getting chat from username: {e}")
-                        return None, None, None
+                    chat = await context.bot.get_chat(f"@{channel_username}")
+                    return chat.id, message_id, chat.title
         except Exception as e:
             print(f"Error parsing message link: {e}")
             return None, None, None
-    
+
+    # Case 3: If no forward info, use manual channel ID
+    elif message.message_id:
+        print(f"⚙️ Using manual channel ID fallback: {MANUAL_BATCH_CHANNEL_ID}")
+        return MANUAL_BATCH_CHANNEL_ID, message.message_id, "Batch Channel"
+
     print("❌ Could not extract chat and message ID")
     return None, None, None
 
-async def check_bot_admin(context, chat_id):
-    """Check if bot is admin in the channel"""
-    try:
-        chat_member = await context.bot.get_chat_member(chat_id, context.bot.id)
-        if chat_member.status in ['administrator', 'creator']:
-            print(f"✅ Bot is admin in channel {chat_id}")
-            return True
-        else:
-            print(f"❌ Bot is NOT admin in channel {chat_id}")
-            return False
-    except Exception as e:
-        print(f"Error checking bot admin status: {e}")
-        return False
 
 async def generate_batch_links(update: Update, context: ContextTypes.DEFAULT_TYPE, chat_id, first_msg_id, last_msg_id, channel_title):
     try:
