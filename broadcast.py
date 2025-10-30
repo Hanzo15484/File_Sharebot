@@ -95,3 +95,9 @@ async def cancel_broadcast(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
     await query.answer("❌ Broadcast cancelled")
     BROADCAST_CANCELLED = True
+
+
+# Register handlers in main.py or your setup function
+def register_broadcast_handlers(application):
+    application.add_handler(CommandHandler("broadcast", broadcast_command))
+    application.add_handler(CallbackQueryHandler(cancel_broadcast, pattern="^broadcast_cancel$"))
