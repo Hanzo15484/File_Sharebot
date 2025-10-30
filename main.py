@@ -10,6 +10,7 @@ from links import genlink_handler, start_link_handler, link_button_handler
 from settings import settings_handler, settings_button_handler, settings_message_handler
 from batch_link import batchlink_handler, batch_message_handler, batch_button_handler
 from force_sub import force_sub_handler, force_sub_button_handler, forwarded_channel_handler, check_force_subscription
+from broadcast import register_broadcast_handlers
 # Set up logging
 logging.basicConfig(
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
@@ -102,7 +103,8 @@ def main():
     application.add_handler(CommandHandler("fsub", force_sub_handler))
     # Callback query handlers with specific patterns
     print("🔘 Adding callback query handlers...")
-    
+
+    register_broadcast_handlers(application)
     # Start module callbacks
     application.add_handler(CallbackQueryHandler(start_button_handler, pattern="^start_"))
 
