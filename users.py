@@ -4,6 +4,7 @@ from telegram.ext import ContextTypes, CommandHandler
 
 from shared_functions import load_admins, load_users, auto_add_user as add_user
 
+from datetime import datetime, timedelta
 async def auto_add_user(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """
     Automatically add user to users.json if not already present
