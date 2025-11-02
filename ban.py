@@ -12,23 +12,18 @@ OWNER_ID = 5373577888
 ADMIN_IDS = []
 
 
-# ==========================
-# 📦 DATA HANDLERS
+# ======================== HANDLERS
 # ==========================
 
-def load_data():
-    """Load JSON data from file."""
+async def load_data():
     if not os.path.exists(DATA_FILE):
         return {"users": {}, "admins": [], "banned_users": []}
     with open(DATA_FILE, "r") as f:
         return json.load(f)
 
-
-def save_data(data):
-    """Save updated data to JSON."""
+async def save_data(data):
     with open(DATA_FILE, "w") as f:
         json.dump(data, f, indent=4)
-
 
 def is_owner(user_id: int) -> bool:
     """Check if user is the bot owner."""
