@@ -12,6 +12,7 @@ from batch_link import batchlink_handler, batch_message_handler, batch_button_ha
 from force_sub import force_sub_handler, force_sub_button_handler, forwarded_channel_handler, check_force_subscription
 from broadcast import register_broadcast_handlers
 from ban import is_banned, ban_user, unban_user
+from users import auto_add_user, users_command
 # Set up logging
 logging.basicConfig(
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
