@@ -67,3 +67,55 @@ def decode_file_id(encoded_id):
         return base64.urlsafe_b64decode(encoded_id.encode()).decode()
     except:
         return None
+
+# Add these functions to shared_functions.py
+
+# Load users data
+def load_users():
+    try:
+        with open('users.json', 'r') as f:
+            return json.load(f)
+    except:
+        return []
+
+# Save users data
+def save_users(users):
+    with open('users.json', 'w') as f:
+        json.dump(users, f, indent=4)
+
+# Load banned users
+def load_banned_users():
+    try:
+        with open('banned_users.json', 'r') as f:
+            return json.load(f)
+    except:
+        return []
+
+# Save banned users
+def save_banned_users(banned_users):
+    with open('banned_users.json', 'w') as f:
+        json.dump(banned_users, f, indent=4)
+
+# Auto-add user to users.json
+def auto_add_user(user_id, username, first_name, last_name=None):
+    users = load_users()
+    
+    # Check if user already exists
+    user_exists = any(user['id'] == user_id for user in users)
+    
+    if not user_exists:
+        user_data = {
+            "id": user_id,
+            "username": username,
+            "first_name": first_name,
+            "last_name": last_name,
+            "joined_at": datetime.utcnow().isoformat()
+        }
+        users.append(user_data)
+        save_users(users)
+        print(f"✅ Added new user: {first_name} (ID: {user_id})")
+
+# Check if user is banned
+def is_user_banned(user_id):
+    banned_users = load_banned_users()
+    return any(user['id'] == user_id for user in banned_users)
