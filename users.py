@@ -2,8 +2,17 @@
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import ContextTypes, CommandHandler
 
-from shared_functions import load_admins, load_users
+from shared_functions import load_admins, load_users, auto_add_user as add_user
 
+async def auto_add_user(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """
+    Automatically add user to users.json if not already present
+    """
+    user_id = update.effective_user.id
+    user = update.effective_user
+    
+    add_user(user_id, user.username, user.first_name, user.last_name)
+    
 async def users_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = update.effective_user.id
     admins = load_admins()
