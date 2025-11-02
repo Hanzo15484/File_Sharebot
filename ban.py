@@ -2,8 +2,24 @@
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import ContextTypes, CommandHandler
 
-from shared_functions import load_admins, load_users, save_users, load_banned_users, save_banned_users, auto_add_user
+from shared_functions import load_admins, load_users, save_users, load_banned_users, save_banned_users, auto_add_user, is_user_banned
 
+async def is_banned(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """
+    Check if user is banned and send message if banned
+    Returns True if user is banned, False otherwise
+    """
+    user_id = update.effective_user.id
+    
+    if is_user_banned(user_id):
+        await update.message.reply_text(
+            "🚫 **You have been banned from using this bot!**\n\n"
+            "If you think this is a mistake, please contact the administrator.",
+            parse_mode="Markdown"
+        )
+        return True  # User is banned
+    return False  # User is not banned
+    
 async def ban_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = update.effective_user.id
     admins = load_admins()
