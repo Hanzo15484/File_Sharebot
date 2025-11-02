@@ -40,7 +40,7 @@ async def admins_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     message_text = (
         f"🛡️ **Administrators**\n\n"
         f"{admin_text}\n\n"
-        f"📊 **Total Admins:** `{len(admins) + 1}`"  # +1 for owner
+        f"📊 **Total Admins:** `{len(admins)}`"  # +1 for owner
     )
     
     await update.message.reply_text(
@@ -49,7 +49,7 @@ async def admins_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
             [InlineKeyboardButton("🔄 Refresh", callback_data="admins_refresh")],
             [InlineKeyboardButton("❌ Close", callback_data="admins_close")]
         ]),
-        parse_mode="HTML"
+        parse_mode="MarkdownV2"
     )
 
 async def admins_button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
