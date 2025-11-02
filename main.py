@@ -11,9 +11,9 @@ from settings import settings_handler, settings_button_handler, settings_message
 from batch_link import batchlink_handler, batch_message_handler, batch_button_handler
 from force_sub import force_sub_handler, force_sub_button_handler, forwarded_channel_handler, check_force_subscription
 from broadcast import register_broadcast_handlers
-from ban import is_banned, ban_user, unban_user
-from users import auto_add_user, users_command
-from admins import admins_command
+from ban import ban_handler, unban_handler, ban_button_handler
+from users import users_handler, users_button_handler
+from admins import admins_handler, admins_button_handler
 from middleware import user_middleware
 # Set up logging
 logging.basicConfig(
@@ -107,10 +107,10 @@ def main():
     application.add_handler(CommandHandler("settings", settings_handler))
     application.add_handler(CommandHandler("batchlink", batchlink_handler))
     application.add_handler(CommandHandler("fsub", force_sub_handler))
-    application.add_handler(CommandHandler("ban", ban_user))
-    application.add_handler(CommandHandler("unban", unban_user)) 
-    application.add_handler(CommandHandler("users", users_command))
-    application.add_handler(CommandHandler("admins", admins_command))
+    application.add_handler(CommandHandler("ban", ban_handler))
+    application.add_handler(CommandHandler("unban", unban_handler))
+    application.add_handler(CommandHandler("users", users_handler))
+    application.add_handler(CommandHandler("admins", admins_handler))
     # Callback query handlers with specific patterns
     print("🔘 Adding callback query handlers...")
 
@@ -137,6 +137,10 @@ def main():
     application.add_handler(CallbackQueryHandler(settings_button_handler, pattern="^auto_delete_"))
     application.add_handler(CallbackQueryHandler(settings_button_handler, pattern="^protect_"))
 
+
+    application.add_handler(CallbackQueryHandler(ban_button_handler, pattern="^ban_"))
+    application.add_handler(CallbackQueryHandler(users_button_handler, pattern="^users_"))
+    application.add_handler(CallbackQueryHandler(admins_button_handler, pattern="^admins_"))
     
     # Message handlers for settings (image and text input)
     print("📨 Adding message handlers...")
