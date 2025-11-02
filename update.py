@@ -1,3 +1,9 @@
+import os
+import sys
+import subsplease 
+import asyncio
+from telegram import Update
+from telegram.ext import ContextTypes
 async def update_bot(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Update the bot from GitHub."""
     try:
