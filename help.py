@@ -38,8 +38,10 @@ async def help_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     help_image = settings.get("help_image", "")
     
     keyboard = [
-        [InlineKeyboardButton("Back", callback_data="help_back")],
-        [InlineKeyboardButton("Close", callback_data="help_close")]
+    [
+        InlineKeyboardButton("《 ʙᴀᴄᴋ", callback_data="start_back"),
+        InlineKeyboardButton("✖ ᴄʟᴏsᴇ", callback_data="start_close")
+    ]
     ]
     reply_markup = InlineKeyboardMarkup(keyboard)
     
@@ -85,9 +87,13 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         start_image = settings.get("start_image", "img.jpg")
         
         keyboard = [
-            [InlineKeyboardButton("About", callback_data="start_about")],
-            [InlineKeyboardButton("Help", callback_data="start_help")],
-            [InlineKeyboardButton("Close", callback_data="start_close")]
+        [
+          InlineKeyboardButton("ᴀʙᴏᴜᴛ", callback_data="start_about"),
+          InlineKeyboardButton("ʜᴇʟᴘ", callback_data="start_help")
+        ],
+        [
+          InlineKeyboardButton("✖ ᴄʟᴏsᴇ", callback_data="start_close")
+        ]
         ]
         reply_markup = InlineKeyboardMarkup(keyboard)
         
