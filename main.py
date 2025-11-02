@@ -14,7 +14,6 @@ from broadcast import register_broadcast_handlers
 from ban import ban_handler, unban_handler, ban_button_handler
 from users import users_handler, users_button_handler
 from admins import admins_handler, admins_button_handler
-from middleware import user_middleware
 # Set up logging
 logging.basicConfig(
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
@@ -98,8 +97,6 @@ def main():
     # Add command handlers
     print("📝 Adding command handlers...")
     
-    application.add_handler(MessageHandler(filters.ALL, user_middleware),
-    group=0)
     # Command handlers
     application.add_handler(CommandHandler("start", start_link_handler))  # Override start handler for link support
     application.add_handler(CommandHandler("help", help_handler))
