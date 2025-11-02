@@ -96,10 +96,12 @@ def main():
             )
     # Add command handlers
     print("📝 Adding command handlers...")
-    application.add_handler(MessageHandler(filters.ALL, is_banned),
-    group=0)
-    application.add_handler(MessageHandler(filters.ALL, auto_add_user),
-    group=0)
+async def user_middleware(update, context):
+    if await is_banned(update, context):
+        return
+    await auto_add_user(update, context)
+
+    application.add_handler(MessageHandler(filters.ALL, user_middleware), group=0)
     # Command handlers
     application.add_handler(CommandHandler("start", start_link_handler))  # Override start handler for link support
     application.add_handler(CommandHandler("help", help_handler))
