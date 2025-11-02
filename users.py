@@ -3,7 +3,7 @@ import json
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import ContextTypes
 
-DATA_FILE = "data.json"
+DATA_FILE = "users.json"
 
 # ----------------------- DATA HANDLING -----------------------
 
