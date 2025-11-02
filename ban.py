@@ -1,22 +1,48 @@
+import os
+import json
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import ContextTypes
 
-# Replace with your actual owner ID
-OWNER_ID = 5373577888  
-ADMIN_IDS = []  # Example admin list
+# ==========================
+# ⚙️ CONFIG
+# ==========================
 
-# Helper check for owner
-def is_owner(user_id: int) -> bool:
-    return user_id == OWNER_ID
+DATA_FILE = "users.json"   # Same file used to store users, admins, and banned users
+OWNER_ID = 5373577888
+ADMIN_IDS = []
+
 
 # ==========================
-# 🔒 BAN SYSTEM CORE
+# 📦 DATA HANDLERS
+# ==========================
+
+def load_data():
+    """Load JSON data from file."""
+    if not os.path.exists(DATA_FILE):
+        return {"users": {}, "admins": [], "banned_users": []}
+    with open(DATA_FILE, "r") as f:
+        return json.load(f)
+
+
+def save_data(data):
+    """Save updated data to JSON."""
+    with open(DATA_FILE, "w") as f:
+        json.dump(data, f, indent=4)
+
+
+def is_owner(user_id: int) -> bool:
+    """Check if user is the bot owner."""
+    return user_id == OWNER_ID
+
+
+# ==========================
+# 🔒 BAN CHECK (Middleware)
 # ==========================
 
 async def is_banned(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """Check if a user is banned and stop execution if yes."""
+    """Check if a user is banned before processing commands."""
     user_id = update.effective_user.id
-    data = await load_data()
+    data = load_data()
 
     if "banned_users" in data and user_id in data["banned_users"]:
         keyboard = InlineKeyboardMarkup([
@@ -49,17 +75,16 @@ async def ban_user(update: Update, context: ContextTypes.DEFAULT_TYPE):
     
     try:
         user_id = int(context.args[0])
-        data = await load_data()
+        data = load_data()
 
         # Initialize banned list
         if "banned_users" not in data:
             data["banned_users"] = []
 
-        # Check if already banned
         if user_id not in data["banned_users"]:
             data["banned_users"].append(user_id)
 
-            # Clean from admin/user lists
+            # Remove user from admins/users if present
             if user_id in ADMIN_IDS and user_id != OWNER_ID:
                 ADMIN_IDS.remove(user_id)
             if "admins" in data and user_id in data["admins"]:
@@ -67,10 +92,16 @@ async def ban_user(update: Update, context: ContextTypes.DEFAULT_TYPE):
             if "users" in data and str(user_id) in data["users"]:
                 del data["users"][str(user_id)]
 
-            await save_data(data)
-            await update.message.reply_text(f"✅ User `{user_id}` has been *banned* from using the bot.", parse_mode="Markdown")
+            save_data(data)
+            await update.message.reply_text(
+                f"✅ User `{user_id}` has been *banned* from using the bot.",
+                parse_mode="Markdown"
+            )
         else:
-            await update.message.reply_text(f"⚠️ User `{user_id}` is already banned.", parse_mode="Markdown")
+            await update.message.reply_text(
+                f"⚠️ User `{user_id}` is already banned.",
+                parse_mode="Markdown"
+            )
 
     except ValueError:
         await update.message.reply_text("Invalid user ID format. Please use a number.")
@@ -92,14 +123,20 @@ async def unban_user(update: Update, context: ContextTypes.DEFAULT_TYPE):
     
     try:
         user_id = int(context.args[0])
-        data = await load_data()
+        data = load_data()
 
         if "banned_users" in data and user_id in data["banned_users"]:
             data["banned_users"].remove(user_id)
-            await save_data(data)
-            await update.message.reply_text(f"✅ User `{user_id}` has been *unbanned*.", parse_mode="Markdown")
+            save_data(data)
+            await update.message.reply_text(
+                f"✅ User `{user_id}` has been *unbanned*.",
+                parse_mode="Markdown"
+            )
         else:
-            await update.message.reply_text(f"⚠️ User `{user_id}` is not banned.", parse_mode="Markdown")
+            await update.message.reply_text(
+                f"⚠️ User `{user_id}` is not banned.",
+                parse_mode="Markdown"
+            )
 
     except ValueError:
         await update.message.reply_text("Invalid user ID format. Please use a number.")
