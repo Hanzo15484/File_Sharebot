@@ -6,6 +6,7 @@ from shared_functions import load_admins, load_users, save_users, load_banned_us
 
 from middleware import check_ban_and_register
 
+from datetime import datetime, timedelta
 async def is_banned(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """
     Check if user is banned and send message if banned
