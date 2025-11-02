@@ -4,6 +4,8 @@ from telegram.ext import ContextTypes, CommandHandler
 
 from shared_functions import load_admins, load_users, save_users, load_banned_users, save_banned_users, auto_add_user, is_user_banned
 
+from middleware import check_ban_and_register
+
 async def is_banned(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """
     Check if user is banned and send message if banned
@@ -19,7 +21,8 @@ async def is_banned(update: Update, context: ContextTypes.DEFAULT_TYPE):
         )
         return True  # User is banned
     return False  # User is not banned
-    
+
+@check_ban_and_register
 async def ban_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = update.effective_user.id
     admins = load_admins()
@@ -114,6 +117,7 @@ async def ban_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
             ])
         )
 
+@check_ban_and_register
 async def unban_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = update.effective_user.id
     admins = load_admins()
