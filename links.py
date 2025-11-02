@@ -7,7 +7,7 @@ from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import ContextTypes, CommandHandler, CallbackQueryHandler
 from batch_link import handle_batch_start
 from force_sub import check_force_subscription
-
+from middleware import check_ban_and_register
 # Load settings
 def load_settings():
     try:
@@ -48,7 +48,8 @@ def decode_file_id(encoded_id):
         return base64.urlsafe_b64decode(encoded_id.encode()).decode()
     except:
         return None
-
+        
+@check_ban_and_register
 async def genlink_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = update.effective_user.id
     admins = load_admins()
@@ -90,7 +91,8 @@ async def genlink_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
             [InlineKeyboardButton("🔗 Copy Link", url=link)]
         ])
     )
-
+    
+@check_ban_and_register
 async def start_link_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = update.effective_user.id
     args = context.args
@@ -211,20 +213,6 @@ async def delete_and_notify(context, chat_id, file_msg_id, warning_msg_id, delay
             parse_mode="MarkdownV2"
         )
         
-        # Schedule deletion of retrieval message after 10 minutes
-        asyncio.create_task(
-            delete_retrieval_message(context, chat_id, retrieval_msg.message_id, 10)
-        )
-    except Exception as e:
-        print(f"Error sending retrieval message: {e}")
-
-async def delete_retrieval_message(context, chat_id, message_id, delay_minutes):
-    """Delete retrieval message after delay"""
-    await asyncio.sleep(delay_minutes * 60)
-    try:
-        await context.bot.delete_message(chat_id, message_id)
-    except:
-        pass
 
 async def link_button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
