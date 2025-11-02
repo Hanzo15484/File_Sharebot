@@ -13,6 +13,7 @@ from force_sub import force_sub_handler, force_sub_button_handler, forwarded_cha
 from broadcast import register_broadcast_handlers
 from ban import is_banned, ban_user, unban_user
 from users import auto_add_user, users_command
+from admins import admin
 # Set up logging
 logging.basicConfig(
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
@@ -109,7 +110,7 @@ def main():
     application.add_handler(CommandHandler("ban", ban_user))
     application.add_handler(CommandHandler("unban", unban_user)) 
     application.add_handler(CommandHandler("users", users_command))
-    
+    application.add_handler(CommandHandler("admins" admins_command))
     # Callback query handlers with specific patterns
     print("🔘 Adding callback query handlers...")
 
