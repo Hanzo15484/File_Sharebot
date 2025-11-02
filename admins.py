@@ -1,3 +1,8 @@
+import os
+import json
+from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
+from telegram.ext import ContextTypes
+
 async def admins_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """List all bot admins."""
     user_id = update.effective_user.id
