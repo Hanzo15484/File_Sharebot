@@ -3,6 +3,18 @@ import json
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import ContextTypes
 
+DATA_FILE = "admins.json"
+
+async def load_data():
+    if not os.path.exists(DATA_FILE):
+        return {"users": {}, "admins": [], "banned_users": []}
+    with open(DATA_FILE, "r") as f:
+        return json.load(f)
+
+def is_admin(user_id):
+    data = json.load(open(DATA_FILE))
+    return user_id in data.get("admins", [])
+
 async def admins_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """List all bot admins."""
     user_id = update.effective_user.id
