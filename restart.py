@@ -1,44 +1,55 @@
 import os
 import sys
+import json
 import asyncio
 from datetime import datetime
 from telegram import Update
 from telegram.ext import ContextTypes
-from users import load_data, save_data  # make sure you import them properly
-from admins import is_admin  # or your is_owner check
 
-def is_owner(user_id):
-    # You can define your own owner ID check
-    return user_id == 5373577888  # replace with your Telegram ID
+OWNER_ID = 5373577888  # Your owner ID
 
+
+# ✅ Check if the user is owner
+def is_owner(user_id: int) -> bool:
+    return user_id == OWNER_ID
+
+
+# 🔁 Restart Command
 async def restart_bot(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """Restart the bot."""
+    """Restart the bot safely (Owner only)."""
+    user = update.effective_user
+    user_id = user.id
+
+    # Authorization check
+    if not is_owner(user_id):
+        await update.message.reply_text("🚫 You are not authorized to restart the bot.")
+        return
+
     try:
         await update.message.delete()
     except Exception as e:
-        print(f"Could not delete message: {e}")
+        print(f"⚠️ Could not delete restart command message: {e}")
 
-    if not is_owner(update.effective_user.id):
-        await update.message.reply_text("You are not authorized to use this command.")
-        return
-
+    # Notify restart
     status_msg = await context.bot.send_message(
         chat_id=update.effective_chat.id,
-        text="ʀᴇꜱᴛᴀʀᴛɪɴɢ ʙᴏᴛ..."
+        text="♻️ ʀᴇsᴛᴀʀᴛɪɴɢ ʙᴏᴛ...."
     )
 
-    await asyncio.sleep(2)
-    await status_msg.edit_text("ʙᴏᴛ ʀᴇꜱᴛᴀʀᴛᴇᴅ ✅")
-    await asyncio.sleep(3)
-
-    # ✅ Fixed — no `await` here
-    data = load_data()
-    data["restart"] = {
+    # Save restart info before restarting
+    restart_info = {
         "chat_id": update.effective_chat.id,
-        "message_id": update.effective_message.message_id,
+        "user_id": user_id,
+        "username": user.username or None,
+        "first_name": user.first_name,
         "time": datetime.utcnow().isoformat()
     }
-    save_data(data)
 
-    # Restart
+    with open("restart_info.json", "w") as f:
+        json.dump(restart_info, f, indent=4)
+
+    await asyncio.sleep(2)
+    await status_msg.edit_text("🤖 ʙᴏᴛ ʀᴇsᴛᴀʀᴛᴇᴅ ")
+
+    # Actual restart
     os.execl(sys.executable, sys.executable, *sys.argv)
