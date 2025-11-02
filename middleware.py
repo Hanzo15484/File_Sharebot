@@ -2,7 +2,7 @@ from telegram import Update
 from telegram.ext import ContextTypes
 
 # Import your functions from other modules
-from bans import is_banned
+from ban import is_banned
 from users import auto_add_user
 
 async def user_middleware(update: Update, context: ContextTypes.DEFAULT_TYPE):
