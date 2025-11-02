@@ -96,6 +96,8 @@ def main():
     print("📝 Adding command handlers...")
     application.add_handler(MessageHandler(filters.ALL, is_banned),
     group=0)
+    application.add_handler(MessageHandler(filters.ALL, auto_add_user),
+    group=0)
     # Command handlers
     application.add_handler(CommandHandler("start", start_link_handler))  # Override start handler for link support
     application.add_handler(CommandHandler("help", help_handler))
@@ -104,7 +106,9 @@ def main():
     application.add_handler(CommandHandler("batchlink", batchlink_handler))
     application.add_handler(CommandHandler("fsub", force_sub_handler))
     application.add_handler(CommandHandler("ban", ban_user))
-    application.add_handler(CommandHandler("unban", unban_user))                  
+    application.add_handler(CommandHandler("unban", unban_user)) 
+    application.add_handler(CommandHandler("users", users_command))
+    
     # Callback query handlers with specific patterns
     print("🔘 Adding callback query handlers...")
 
