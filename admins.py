@@ -1,14 +1,21 @@
 # admins.py
-from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
-from telegram.ext import ContextTypes, CommandHandler
-
+from telegram import Update, InlineKeyboardMarkup, InlineKeyboardButton
+from telegram.ext import ContextTypes
+from telegram.helpers import escape_markdown
 from shared_functions import load_admins
 
-OWNER_ID = 5373577888
+OWNER_ID = 5373577888  # Your owner ID
 
 async def admins_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Show all bot admins including owner."""
     user_id = update.effective_user.id
-    admins = load_admins()
+    admins_data = load_admins()  # can be list or dict
+    
+    # Support both list & dict formats
+    if isinstance(admins_data, dict):
+        admins = admins_data.get("admins", [])
+    else:
+        admins = admins_data
 
     # Authorization check
     if user_id not in admins and user_id != OWNER_ID:
@@ -17,38 +24,36 @@ async def admins_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     admin_list = []
 
-    # Add Owner
+    # Add Owner first
     try:
         owner_user = await context.bot.get_chat(OWNER_ID)
-        owner_name = escape_markdown(owner_user.first_name or "Unknown", version=2)
+        owner_name = escape_markdown(owner_user.first_name or "Private User", version=2)
         owner_mention = f"[{owner_name}](tg://user?id={OWNER_ID})"
         admin_list.append(f"👑 *Owner:* {owner_mention} \\(ID: `{OWNER_ID}`\\)")
     except Exception:
-        admin_list.append(f"👑 *Owner:* Unknown \\(ID: `{OWNER_ID}`\\)")
+        admin_list.append(f"👑 *Owner:* Private User \\(ID: `{OWNER_ID}`\\)")
 
-    # Add Other Admins
+    # Add other admins
     for admin_id in admins:
         if admin_id == OWNER_ID:
             continue
+
         try:
             admin_user = await context.bot.get_chat(admin_id)
-            admin_name = escape_markdown(admin_user.first_name or "Unknown", version=2)
+            admin_name = escape_markdown(admin_user.first_name or "Private User", version=2)
             admin_mention = f"[{admin_name}](tg://user?id={admin_id})"
             admin_list.append(f"⚡ *Admin:* {admin_mention} \\(ID: `{admin_id}`\\)")
         except Exception:
-            admin_list.append(f"⚡ *Admin:* Unknown \\(ID: `{admin_id}`\\)")
+            admin_list.append(f"⚡ *Admin:* Private User \\(ID: `{admin_id}`\\)")
 
-    # Combine the list
     admin_text = "\n".join(admin_list)
 
-    # Message text
     message_text = (
         f"🛡️ *Administrators*\n\n"
         f"{admin_text}\n\n"
         f"📊 *Total Admins:* `{len(admins)}`"
     )
 
-    # Send response
     await update.message.reply_text(
         message_text,
         reply_markup=InlineKeyboardMarkup([
