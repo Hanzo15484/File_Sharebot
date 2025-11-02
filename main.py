@@ -17,7 +17,7 @@ from admins import admins_command
 # Set up logging
 logging.basicConfig(
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-    level=logging.WARNING
+    level=logging.INFO
 )
 
 # Load admin data for verification
