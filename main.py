@@ -14,6 +14,8 @@ from broadcast import register_broadcast_handlers
 from ban import ban_handler, unban_handler, ban_button_handler
 from users import users_handler, users_button_handler
 from admins import admins_handler, admins_button_handler
+from restart import restart_bot
+from update import update_bot
 # Set up logging
 logging.basicConfig(
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
@@ -108,6 +110,8 @@ def main():
     application.add_handler(CommandHandler("unban", unban_handler))
     application.add_handler(CommandHandler("users", users_handler))
     application.add_handler(CommandHandler("admins", admins_handler))
+    application.add_handler(CommandHandler("restart", restart_bot))
+    application.add_handler(CommandHandler("update", update_bot))
     # Callback query handlers with specific patterns
     print("🔘 Adding callback query handlers...")
 
