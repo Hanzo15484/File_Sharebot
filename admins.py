@@ -5,31 +5,28 @@ from telegram.ext import ContextTypes
 
 DATA_FILE = "admins.json"
 
-
-# ---------- Helper Functions ----------
-async def load_data():
+def load_data():
     if not os.path.exists(DATA_FILE):
-        return {"users": {}, "admins": [], "banned_users": []}
+        default = {"users": {}, "admins": [5373577888], "banned_users": []}
+        with open(DATA_FILE, "w") as f:
+            json.dump(default, f, indent=4)
+        return default
     with open(DATA_FILE, "r") as f:
         return json.load(f)
 
-async def save_data(data):
+def save_data(data):
     with open(DATA_FILE, "w") as f:
         json.dump(data, f, indent=4)
 
-
 def is_admin(user_id: int) -> bool:
-    """Check if a user is an admin."""
     data = load_data()
     return user_id in data.get("admins", [])
-
 
 # ---------- Main Command ----------
 async def admins_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """List all bot admins."""
     user_id = update.effective_user.id
 
-    # Access control
     if not is_admin(user_id):
         await update.message.reply_text("You are not authorized to use this bot.")
         return
@@ -37,7 +34,6 @@ async def admins_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     data = load_data()
     admins = data.get("admins", [])
 
-    # Build message
     message = "👑 **Bot Admins:**\n\n"
     for i, admin_id in enumerate(admins, 1):
         try:
@@ -46,14 +42,7 @@ async def admins_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
         except Exception:
             message += f"{i}. Unknown User (`{admin_id}`)\n"
 
-    # Inline button
-    keyboard = [
-        [InlineKeyboardButton("ᴄʟᴏsᴇ", callback_data="close")]
-    ]
+    keyboard = [[InlineKeyboardButton("ᴄʟᴏsᴇ", callback_data="close")]]
     reply_markup = InlineKeyboardMarkup(keyboard)
 
-    await update.message.reply_text(
-        message,
-        reply_markup=reply_markup,
-        parse_mode="Markdown"
-    )
+    await update.message.reply_text(message, reply_markup=reply_markup, parse_mode="Markdown")
