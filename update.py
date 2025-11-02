@@ -4,6 +4,13 @@ import subprocess
 import asyncio
 from telegram import Update
 from telegram.ext import ContextTypes
+
+OWNER_ID = 5373577888  # Replace with your actual owner ID
+
+
+def is_owner(user_id: int) -> bool:
+    return user_id == OWNER_ID
+    
 async def update_bot(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Update the bot from GitHub."""
     try:
