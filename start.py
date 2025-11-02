@@ -33,9 +33,13 @@ async def start_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     
     # Create keyboard
     keyboard = [
-        [InlineKeyboardButton("About", callback_data="start_about")],
-        [InlineKeyboardButton("Help", callback_data="start_help")],
-        [InlineKeyboardButton("Close", callback_data="start_close")]
+        [
+          InlineKeyboardButton("ᴀʙᴏᴜᴛ", callback_data="start_about"),
+          InlineKeyboardButton("ʜᴇʟᴘ", callback_data="start_help")
+        ],
+        [
+          InlineKeyboardButton("✖ ᴄʟᴏsᴇ", callback_data="start_close")
+        ]
     ]
     reply_markup = InlineKeyboardMarkup(keyboard)
     
@@ -76,8 +80,10 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         )
         
         keyboard = [
-            [InlineKeyboardButton("Back", callback_data="start_back")],
-            [InlineKeyboardButton("Close", callback_data="start_close")]
+      [
+        InlineKeyboardButton("《 ʙᴀᴄᴋ", callback_data="start_back"),
+        InlineKeyboardButton("✖ ᴄʟᴏsᴇ", callback_data="start_close")
+      ]
         ]
         reply_markup = InlineKeyboardMarkup(keyboard)
         
@@ -107,8 +113,10 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         )
         
         keyboard = [
-            [InlineKeyboardButton("Back", callback_data="start_back")],
-            [InlineKeyboardButton("Close", callback_data="start_close")]
+      [
+        InlineKeyboardButton("《 ʙᴀᴄᴋ", callback_data="start_back"),
+        InlineKeyboardButton("✖ ᴄʟᴏsᴇ", callback_data="start_close")
+      ]
         ]
         reply_markup = InlineKeyboardMarkup(keyboard)
         
@@ -132,9 +140,13 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         start_text = settings.get("start_text", "Hi {mention} welcome to File Store Bot").format(mention=mention)
         
         keyboard = [
-            [InlineKeyboardButton("About", callback_data="start_about")],
-            [InlineKeyboardButton("Help", callback_data="start_help")],
-            [InlineKeyboardButton("Close", callback_data="start_close")]
+        [
+          InlineKeyboardButton("ᴀʙᴏᴜᴛ", callback_data="start_about"),
+          InlineKeyboardButton("ʜᴇʟᴘ", callback_data="start_help")
+        ],
+        [
+          InlineKeyboardButton("✖ ᴄʟᴏsᴇ", callback_data="start_close")
+        ]
         ]
         reply_markup = InlineKeyboardMarkup(keyboard)
         
