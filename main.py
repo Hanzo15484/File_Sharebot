@@ -110,7 +110,7 @@ def main():
     application.add_handler(CommandHandler("ban", ban_user))
     application.add_handler(CommandHandler("unban", unban_user)) 
     application.add_handler(CommandHandler("users", users_command))
-    application.add_handler(CommandHandler("admins" admins_command))
+    application.add_handler(CommandHandler("admins", admins_command))
     # Callback query handlers with specific patterns
     print("🔘 Adding callback query handlers...")
 
