@@ -213,7 +213,9 @@ async def delete_and_notify(context, chat_id, file_msg_id, warning_msg_id, delay
             parse_mode="MarkdownV2"
         )
         
-
+    except Exception as e:
+        print(f"Error sending retrieval message: {e}")
+        
 async def link_button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
     await query.answer()
