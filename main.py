@@ -13,7 +13,7 @@ from force_sub import force_sub_handler, force_sub_button_handler, forwarded_cha
 from broadcast import register_broadcast_handlers
 from ban import is_banned, ban_user, unban_user
 from users import auto_add_user, users_command
-from admins import admin
+from admins import admins_command
 # Set up logging
 logging.basicConfig(
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
