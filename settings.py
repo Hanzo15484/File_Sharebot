@@ -56,7 +56,6 @@ async def settings_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     )
     
     keyboard = [
-    keyboard = [
     [InlineKeyboardButton("sᴛᴀʀᴛ ɪᴍᴀɢᴇ", callback_data="settings_start_img"),
      InlineKeyboardButton("ʜᴇʟᴘ ɪᴍᴀɢᴇ", callback_data="settings_help_img")],
 
