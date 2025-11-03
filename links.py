@@ -8,6 +8,7 @@ from telegram.ext import ContextTypes, CommandHandler, CallbackQueryHandler
 from batch_link import handle_batch_start
 from force_sub import check_force_subscription
 from middleware import check_ban_and_register
+from shortener import load_shortener, shorten_url
 # Load settings
 def load_settings():
     try:
@@ -85,12 +86,48 @@ async def genlink_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     }
     save_links(links)
     
-    await update.message.reply_text(
-        f"✅ Link generated successfully!\n\n{link}",
-        reply_markup=InlineKeyboardMarkup([
-            [InlineKeyboardButton("🔗 Copy Link", url=link)]
-        ])
+    # Check if shortener is enabled and generate shortened link
+    shortener_settings = load_shortener()
+    
+    if shortener_settings['enabled']:
+        try:
+            # Generate shortened version
+            shortened_url = await shorten_url(
+                shortener_settings['api_key'],
+                link,
+                shortener_settings['website']
+            )
+            
+            # Send both links
+            await update.message.reply_text(
+                f"✅ **Links Generated Successfully!**\n\n"
+                f"🔗 **Original Link:**\n`{link}`\n\n"
+                f"🔗 **Shortened Link:**\n{shortened_url}",
+                reply_markup=InlineKeyboardMarkup([
+                    [InlineKeyboardButton("🔗 Copy Short Link", url=shortened_url)],
+                    [InlineKeyboardButton("📋 Copy Original", callback_data=f"copy_original_{link}")]
+                ]),
+                parse_mode="Markdown"
+            )
+            
+        except Exception as e:
+            # If shortening fails, send original link only
+            print(f"Shortening failed: {e}")
+            await update.message.reply_text(
+                f"✅ Link generated successfully!\n\n{link}",
+                reply_markup=InlineKeyboardMarkup([
+                    [InlineKeyboardButton("🔗 Copy Link", url=link)]
+                ])
+            )
+    else:
+        # Shortener not enabled, send original link only
+        await update.message.reply_text(
+            f"✅ Link generated successfully!\n\n{link}",
+            reply_markup=InlineKeyboardMarkup([
+                [InlineKeyboardButton("🔗 Copy Link", url=link)]
+            ])
     )
+
     
 @check_ban_and_register
 async def start_link_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -224,7 +261,11 @@ async def link_button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE
     
     if data == "link_close":
         await query.message.delete()
-
+    
+    # Add this new condition for copying original links
+    elif data.startswith("copy_original_"):
+        original_link = data.replace("copy_original_", "")
+        await query.answer(f"Original link copied!", show_alert=False)
 # Load admin data
 def load_admins():
     try:
