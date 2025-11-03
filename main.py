@@ -10,7 +10,7 @@ from links import genlink_handler, start_link_handler, link_button_handler
 from settings import settings_handler, settings_button_handler, settings_message_handler
 from batch_link import batchlink_handler, batch_message_handler, batch_button_handler
 from force_sub import force_sub_handler, force_sub_button_handler, forwarded_channel_handler, check_force_subscription
-from broadcast import register_broadcast_handlers
+from broadcast import broadcast_handler, broadcast_status_handler, broadcast_button_handler
 from ban import ban_handler, unban_handler, ban_button_handler
 from users import users_handler, users_button_handler
 from admins import admins_handler, admins_button_handler
@@ -94,7 +94,7 @@ def main():
     if hasattr(application.updater, 'job_queue') and hasattr(application.updater.job_queue, 'scheduler'):
             application.updater.job_queue.scheduler.configure(
                 timezone="UTC",
-                max_workers=4 # Reduce worker threads for Termux
+                max_workers=5 # Reduce worker threads for Termux
             )
     # Add command handlers
     print("📝 Adding command handlers...")
@@ -112,6 +112,8 @@ def main():
     application.add_handler(CommandHandler("admins", admins_handler))
     application.add_handler(CommandHandler("restart", restart_bot))
     application.add_handler(CommandHandler("update", update_bot))
+    application.add_handler(CommandHandler("broadcast", broadcast_handler))
+    application.add_handler(CommandHandler("broadcaststatus", broadcast_status_handler))
     # Callback query handlers with specific patterns
     print("🔘 Adding callback query handlers...")
 
@@ -129,7 +131,8 @@ def main():
     application.add_handler(CallbackQueryHandler(force_sub_button_handler, pattern="^fsub_"))
     # Help module callbacks  
     application.add_handler(CallbackQueryHandler(help_button_handler, pattern="^help_"))
-    
+
+    application.add_handler(CallbackQueryHandler(broadcast_button_handler, pattern="^broadcast_"))
     # Links module callbacks
     application.add_handler(CallbackQueryHandler(link_button_handler, pattern="^link_"))
     
