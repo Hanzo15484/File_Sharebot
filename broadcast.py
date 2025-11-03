@@ -76,7 +76,7 @@ async def broadcast_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         f"❌ **Failed:** `0`",
         reply_markup=InlineKeyboardMarkup([
                 [
-                 InlineKeyboardButton("⚠︎ ᴄᴀɴᴄᴇʟ ʙʀᴏᴀᴅᴄᴀsᴛ", callback_data="broadcast_cancel"),
+                 InlineKeyboardButton("⚠︎ ᴄᴀɴᴄᴇʟ", callback_data="broadcast_cancel"),
                  InlineKeyboardButton("✖ ᴄʟᴏsᴇ", callback_data="broadcast_close")
                 ]
             ]),
@@ -168,7 +168,7 @@ async def update_broadcast_progress(context, status_message_id, chat_id):
             text=status_text,
             reply_markup=InlineKeyboardMarkup([
                 [
-                 InlineKeyboardButton("⚠︎ ᴄᴀɴᴄᴇʟ ʙʀᴏᴀᴅᴄᴀsᴛ", callback_data="broadcast_cancel"),
+                 InlineKeyboardButton("⚠︎ ᴄᴀɴᴄᴇʟ", callback_data="broadcast_cancel"),
                  InlineKeyboardButton("✖ ᴄʟᴏsᴇ", callback_data="broadcast_close")
                 ]
             ]),
@@ -211,7 +211,7 @@ async def finalize_broadcast(context, status_message_id, chat_id):
             text=summary_text,
             reply_markup=InlineKeyboardMarkup([
                 [
-                  InlineKeyboardButton("▪︎ ɴᴇᴡ ʙʀᴏᴀᴅᴄᴀsᴛ", callback_data="broadcast_new"),
+                  InlineKeyboardButton("▪︎ ɴᴇᴡ", callback_data="broadcast_new"),
                   InlineKeyboardButton("✖ ᴄʟᴏsᴇ", callback_data="broadcast_close")
                 ]
             ]),
@@ -251,7 +251,7 @@ async def broadcast_button_handler(update: Update, context: ContextTypes.DEFAULT
                 "The broadcast has been stopped. Some users may have already received the message.",
                 reply_markup=InlineKeyboardMarkup([
                 [
-                  InlineKeyboardButton("▪︎ ɴᴇᴡ ʙʀᴏᴀᴅᴄᴀsᴛ", callback_data="broadcast_new"),
+                  InlineKeyboardButton("▪︎ ɴᴇᴡ", callback_data="broadcast_new"),
                   InlineKeyboardButton("✖ ᴄʟᴏsᴇ", callback_data="broadcast_close")
                 ]
             ]),
@@ -299,7 +299,7 @@ async def broadcast_status_handler(update: Update, context: ContextTypes.DEFAULT
             status_text,
             reply_markup=InlineKeyboardMarkup([
                 [
-                 InlineKeyboardButton("⚠︎ ᴄᴀɴᴄᴇʟ ʙʀᴏᴀᴅᴄᴀsᴛ", callback_data="broadcast_cancel"),
+                 InlineKeyboardButton("⚠︎ ᴄᴀɴᴄᴇʟ", callback_data="broadcast_cancel"),
                  InlineKeyboardButton("✖ ᴄʟᴏsᴇ", callback_data="broadcast_close")
                 ]
             ]),
