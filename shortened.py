@@ -5,7 +5,7 @@ import asyncio
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import ContextTypes, CommandHandler, MessageHandler, filters
 
-from shared_functions import load_admins, load_settings, save_settings
+from shared_functions import load_admins, load_settings
 from middleware import check_ban_and_register
 
 # Load shortener settings
