@@ -372,35 +372,39 @@ async def shorten_url(api_key: str, url: str, website: str) -> str:
     """Shorten URL using the configured shortener service"""
     try:
         if "gplinks" in website.lower():
-            # GPLinks API implementation - CORRECT VERSION
+            # ALTERNATIVE GPLinks API implementation
             api_url = "https://gplinks.in/api"
-            headers = {
-                "Content-Type": "application/x-www-form-urlencoded",
-                "Accept": "application/json"
-            }
-            data = {
+            payload = {
                 "api": api_key,
                 "url": url
             }
             
-            print(f"GPLinks Request: {data}")  # Debug print
+            print(f"GPLinks Request: {payload}")
             
-            response = requests.post(api_url, data=data, headers=headers, timeout=10)
-            print(f"GPLinks Response Status: {response.status_code}")  # Debug print
-            print(f"GPLinks Response Text: {response.text}")  # Debug print
-            
-            data = response.json()
-            
-            if data.get('status') == 'success':
-                shortened_url = data.get('shortenedUrl')
-                if shortened_url:
-                    return shortened_url
-                else:
-                    raise Exception("GPLinks: No shortened URL in response")
-            else:
-                error_msg = data.get('msg', data.get('message', 'Unknown error from GPLinks'))
-                raise Exception(f"GPLinks API error: {error_msg}")
+            # Try different content types
+            try:
+                # Method 1: Form data
+                response = requests.post(api_url, data=payload, timeout=10)
+                print(f"GPLinks Response (Form): {response.status_code} - {response.text}")
                 
+                if response.status_code == 200:
+                    data = response.json()
+                    if data.get('status') == 'success':
+                        return data.get('shortenedUrl', url)
+            except:
+                # Method 2: JSON data
+                response = requests.post(api_url, json=payload, timeout=10)
+                print(f"GPLinks Response (JSON): {response.status_code} - {response.text}")
+                
+                if response.status_code == 200:
+                    data = response.json()
+                    if data.get('status') == 'success':
+                        return data.get('shortenedUrl', url)
+            
+            # If we get here, both methods failed
+            raise Exception("GPLinks: API request failed")
+                
+        # ... rest of the function remains the same
         elif "shortconnect" in website.lower():
             # ShortConnect API implementation
             api_url = "https://api.shortconnect.com/shorten"
