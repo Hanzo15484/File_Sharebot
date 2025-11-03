@@ -1,4 +1,3 @@
-# shortener.py
 import requests
 import json
 import asyncio
@@ -247,35 +246,42 @@ async def shortener_api_handler(update: Update, context: ContextTypes.DEFAULT_TY
 
 async def detect_shortener_service(api_token: str):
     """Detect which shortener service the API token belongs to"""
-    # Common shortener API endpoints for verification
+    test_url = "https://google.com"
+    
     services = {
         "GPLinks": {
             "url": "https://gplinks.in/api",
-            "params": {"api": api_token, "url": "https://google.com"}
+            "params": {"api": api_token, "url": test_url}
         },
         "ShortConnect": {
-            "url": "https://shortconnect.com/api",
-            "params": {"api": api_token, "url": "https://google.com"}
+            "url": "https://api.shortconnect.com/shorten",
+            "params": {"api": api_token, "url": test_url}
         },
         "Dalink": {
             "url": "https://dalink.in/api",
-            "params": {"api": api_token, "url": "https://google.com"}
+            "params": {"api": api_token, "url": test_url}
         }
     }
     
     for name, config in services.items():
         try:
+            print(f"Testing {name} API...")
             response = requests.get(config['url'], params=config['params'], timeout=10)
+            print(f"{name} Response Status: {response.status_code}")
+            print(f"{name} Response Text: {response.text}")
+            
             if response.status_code == 200:
                 data = response.json()
-                if data.get('status') == 'success' or 'shortenedUrl' in data:
-                    return name, config['url'].replace('/api', '')
-        except:
+                if data.get('status') == 'success' or 'shortenedUrl' in data or 'short_url' in data:
+                    print(f"✅ {name} API verified successfully!")
+                    return name, config['url'].replace('/api', '').replace('/shorten', '')
+        except Exception as e:
+            print(f"❌ {name} test failed: {e}")
             continue
     
     # If no specific service detected, assume generic
+    print("⚠️ No specific service detected, using generic")
     return "Custom Shortener", "https://example.com"
-
 # Shortlink command
 @check_ban_and_register
 async def shortlink_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -355,7 +361,6 @@ async def generate_shortened_link(update: Update, context: ContextTypes.DEFAULT_
 
 async def shorten_url(api_key: str, url: str, website: str) -> str:
     """Shorten URL using the configured shortener service"""
-    # This is a simplified version - you'll need to implement based on the specific shortener API
     try:
         if "gplinks" in website.lower():
             # GPLinks API implementation
@@ -367,10 +372,49 @@ async def shorten_url(api_key: str, url: str, website: str) -> str:
             response = requests.get(api_url, params=params, timeout=10)
             data = response.json()
             
+            print(f"GPLinks Response: {data}")  # Debug print
+            
             if data.get('status') == 'success':
                 return data.get('shortenedUrl', url)
             else:
-                raise Exception(data.get('msg', 'Unknown error'))
+                error_msg = data.get('msg', 'Unknown error from GPLinks')
+                raise Exception(f"GPLinks API error: {error_msg}")
+                
+        elif "shortconnect" in website.lower():
+            # ShortConnect API implementation
+            api_url = "https://api.shortconnect.com/shorten"
+            params = {
+                "api": api_key,
+                "url": url
+            }
+            response = requests.get(api_url, params=params, timeout=10)
+            data = response.json()
+            
+            print(f"ShortConnect Response: {data}")  # Debug print
+            
+            if data.get('status') == 'success':
+                return data.get('short_url', url)
+            else:
+                error_msg = data.get('message', 'Unknown error from ShortConnect')
+                raise Exception(f"ShortConnect API error: {error_msg}")
+                
+        elif "dalink" in website.lower():
+            # Dalink API implementation
+            api_url = "https://dalink.in/api"
+            params = {
+                "api": api_key,
+                "url": url
+            }
+            response = requests.get(api_url, params=params, timeout=10)
+            data = response.json()
+            
+            print(f"Dalink Response: {data}")  # Debug print
+            
+            if data.get('status') == 'success':
+                return data.get('shortenedUrl', url)
+            else:
+                error_msg = data.get('msg', 'Unknown error from Dalink')
+                raise Exception(f"Dalink API error: {error_msg}")
                 
         else:
             # Generic shortener implementation
@@ -382,11 +426,23 @@ async def shorten_url(api_key: str, url: str, website: str) -> str:
             response = requests.get(api_url, params=params, timeout=10)
             data = response.json()
             
-            return data.get('shortenedUrl', data.get('short_url', url))
+            print(f"Generic Response: {data}")  # Debug print
             
+            # Try common response formats
+            if data.get('status') == 'success':
+                return data.get('shortenedUrl', data.get('short_url', url))
+            elif 'shortenedUrl' in data:
+                return data['shortenedUrl']
+            elif 'short_url' in data:
+                return data['short_url']
+            else:
+                raise Exception(f"Unknown response format: {data}")
+            
+    except requests.exceptions.RequestException as e:
+        raise Exception(f"Network error: {str(e)}")
     except Exception as e:
         raise Exception(f"Shortening failed: {str(e)}")
-
+        
 async def shortlink_button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Handle shortlink button clicks"""
     query = update.callback_query
