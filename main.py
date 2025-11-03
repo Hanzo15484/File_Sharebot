@@ -16,6 +16,7 @@ from users import users_handler, users_button_handler
 from admins import admins_handler, admins_button_handler
 from restart import restart_bot
 from update import update_bot
+from shortener import shortener_handler, shortlink_handler, shortener_button_handler, shortener_api_handler, shortlink_button_handler
 # Set up logging
 logging.basicConfig(
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
@@ -114,6 +115,8 @@ def main():
     application.add_handler(CommandHandler("update", update_bot))
     application.add_handler(CommandHandler("broadcast", broadcast_handler))
     application.add_handler(CommandHandler("broadcaststatus", broadcast_status_handler))
+    application.add_handler(CommandHandler("shortener", shortener_handler))
+    application.add_handler(CommandHandler("shortlink", shortlink_handler))
     # Callback query handlers with specific patterns
     print("🔘 Adding callback query handlers...")
 
@@ -144,7 +147,14 @@ def main():
     application.add_handler(CallbackQueryHandler(ban_button_handler, pattern="^ban_"))
     application.add_handler(CallbackQueryHandler(users_button_handler, pattern="^users_"))
     application.add_handler(CallbackQueryHandler(admins_button_handler, pattern="^admins_"))
-    
+
+    # Add message handler for API input
+    application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, shortener_api_handler),
+    group=1)
+
+    # Add callback query handlers
+    application.add_handler(CallbackQueryHandler(shortener_button_handler, pattern="^shortener_"))
+    application.add_handler(CallbackQueryHandler(shortlink_button_handler, pattern="^shortlink_"))
     # Message handlers for settings (image and text input)
     print("📨 Adding message handlers...")
     # For handling images (start/help/force sub)
