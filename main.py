@@ -16,7 +16,7 @@ from users import users_handler, users_button_handler
 from admins import admins_handler, admins_button_handler
 from restart import restart_bot
 from update import update_bot
-from shortener import shortener_handler, shortlink_handler, shortener_button_handler, shortener_api_handler, shortlink_button_handler
+from shortened import shortener_handler, shortlink_handler, shortener_button_handler, shortener_api_handler, shortlink_button_handler
 # Set up logging
 logging.basicConfig(
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
