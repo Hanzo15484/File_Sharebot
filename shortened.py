@@ -373,7 +373,7 @@ async def shorten_url(api_key: str, url: str, website: str) -> str:
     try:
         if "gplinks" in website.lower():
             # ALTERNATIVE GPLinks API implementation
-            api_url = "https://gplinks.in/api"
+            api_url = "https://gplinks.in/api.php"
             payload = {
                 "api": api_key,
                 "url": url
