@@ -237,8 +237,8 @@ async def shortener_api_handler(update: Update, context: ContextTypes.DEFAULT_TY
             "❌ **API Verification Failed**\n\n"
             "The provided API token could not be verified. Please check:\n"
             "• API token is correct\n"
-            • Supported shortener service\n"
-            • Internet connection\n\n"
+            "• Supported shortener service\n"
+            "• Internet connection\n\n"
             "Use /shortener to try again.",
             parse_mode="Markdown"
         )
