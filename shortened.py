@@ -317,10 +317,17 @@ async def generate_shortened_link(update: Update, context: ContextTypes.DEFAULT_
     shortener_settings = load_shortener()
     api_key = shortener_settings['api_key']
     website = shortener_settings['website']
-    
+
+    replied_message = update.message.reply_to_message
+    message_id = replied_message.message_id
+    chat_id = update.effective_chat.id
     # Get the original link (this would come from your links.py)
     # For now, we'll create a placeholder - you'll need to integrate with your actual link generation
-    original_link = "https://t.me/your_bot?start=example123"
+    from links import encode_file_id
+    file_id = f"{chat_id}:{message_id}"
+    encoded_id = encode_file_id(file_id)
+    
+    original_link = f"https://Rimuru_filebot?start={encoded_id}"
     
     try:
         shortened_url = await shorten_url(api_key, original_link, website)
