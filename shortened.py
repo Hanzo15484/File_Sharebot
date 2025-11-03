@@ -326,8 +326,9 @@ async def generate_shortened_link(update: Update, context: ContextTypes.DEFAULT_
     from links import encode_file_id
     file_id = f"{chat_id}:{message_id}"
     encoded_id = encode_file_id(file_id)
-    
-    original_link = f"https://Rimuru_filebot?start={encoded_id}"
+
+    bot_username = context.bot.username
+    original_link = f"https://{bot_username}?start={encoded_id}"
     
     try:
         shortened_url = await shorten_url(api_key, original_link, website)
