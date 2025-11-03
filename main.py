@@ -117,7 +117,6 @@ def main():
     # Callback query handlers with specific patterns
     print("🔘 Adding callback query handlers...")
 
-    register_broadcast_handlers(application)
     # Start module callbacks
     application.add_handler(CallbackQueryHandler(start_button_handler, pattern="^start_"))
 
