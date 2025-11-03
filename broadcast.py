@@ -1,103 +1,313 @@
-import json, asyncio
+# broadcast.py
+import asyncio
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
-from telegram.ext import CommandHandler, CallbackQueryHandler, ContextTypes
+from telegram.ext import ContextTypes, CommandHandler, CallbackQueryHandler
+from datetime import datetime
 
-BROADCAST_CANCELLED = False
+from shared_functions import load_users, load_admins
+from middleware import check_ban_and_register
 
+# Global variable to track broadcast status
+broadcast_status = {
+    'is_running': False,
+    'current_index': 0,
+    'total_users': 0,
+    'success_count': 0,
+    'failed_count': 0,
+    'start_time': None,
+    'message': None,
+    'task': None
+}
 
-def load_admins():
-    """Load admin IDs from admins.json"""
-    try:
-        with open('admins.json', 'r') as f:
-            return json.load(f)
-    except:
-        return [5373577888]  # fallback default admin ID
-
-
-async def broadcast_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """Handle /broadcast <reply to message> command."""
-    global BROADCAST_CANCELLED
+@check_ban_and_register
+async def broadcast_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = update.effective_user.id
-
-    admins = load_admins()
-    if user_id not in admins:
-        await update.message.reply_text("🚫 You are not authorized to use this command.")
+    
+    # Check if user is owner (only owner can broadcast)
+    if user_id != 5373577888:
+        await update.message.reply_text("❌ This command is only available for the bot owner!")
         return
-
-    if not update.message.reply_to_message:
-        await update.message.reply_text("⚠️ Please reply to a message to broadcast it.")
-        return
-
-    message_obj = await update.message.reply_text("📢 Starting broadcast...")
-    text = update.message.reply_to_message.text or update.message.reply_to_message.caption
-
-    if not text:
-        await message_obj.edit_text("⚠️ The replied message doesn't contain text or caption.")
-        return
-
-    await broadcast_to_users_with_progress(context, text, message_obj)
-
-
-async def broadcast_to_users_with_progress(context: ContextTypes.DEFAULT_TYPE, text: str, message_obj):
-    """Broadcast message to all active users with progress bar and cancel support."""
-    global BROADCAST_CANCELLED
-    BROADCAST_CANCELLED = False
-
-    # Load users (replace with your own storage logic)
-    data = await load_data()  # must return dict with key "users"
-    users = list(data.get("users", {}))
-    total_users = len(users)
-    success_count = 0
-    failed_count = 0
-
-    keyboard = [[InlineKeyboardButton("❌ Cancel", callback_data="broadcast_cancel")]]
-    reply_markup = InlineKeyboardMarkup(keyboard)
-
-    for idx, user_id in enumerate(users, start=1):
-        if BROADCAST_CANCELLED:
-            await message_obj.edit_text("❌ Broadcasting cancelled by owner.")
-            return
-
-        try:
-            await context.bot.send_message(chat_id=int(user_id), text=text)
-            success_count += 1
-        except Exception:
-            failed_count += 1
-
-        remaining_count = total_users - idx
-        percent = int((idx / total_users) * 100)
-        bar_length = 20
-        filled_length = int(bar_length * percent // 100)
-        bar = "█" * filled_length + "░" * (bar_length - filled_length)
-
-        status_text = (
-            f"📢 Broadcasting message...\n\n"
-            f"{bar} {percent}%\n"
-            f"✅ Success: {success_count}\n"
-            f"❌ Failed: {failed_count}\n"
-            f"⏳ Remaining: {remaining_count}\n"
+    
+    # Check if broadcast is already running
+    if broadcast_status['is_running']:
+        await update.message.reply_text(
+            "⚠️ **Broadcast is already in progress!**\n\n"
+            "Please wait for the current broadcast to complete or cancel it first.",
+            parse_mode="Markdown"
         )
-
-        await message_obj.edit_text(status_text, reply_markup=reply_markup)
-        await asyncio.sleep(0.05)  # delay to avoid Telegram rate limits
-
-    await message_obj.edit_text(
-        f"✅ Broadcasting completed!\n\n"
-        f"✅ Sent: {success_count}\n"
-        f"❌ Failed: {failed_count}\n"
-        f"👥 Total Users: {total_users}"
+        return
+    
+    # Check if message is replied
+    if not update.message.reply_to_message:
+        await update.message.reply_text(
+            "❌ **Usage:** /broadcast (reply to a message)\n\n"
+            "Please reply to the message you want to broadcast.",
+            parse_mode="Markdown"
+        )
+        return
+    
+    users = load_users()
+    total_users = len(users)
+    
+    if total_users == 0:
+        await update.message.reply_text("❌ No users found in the database!")
+        return
+    
+    # Store the message to broadcast
+    broadcast_status.update({
+        'is_running': True,
+        'current_index': 0,
+        'total_users': total_users,
+        'success_count': 0,
+        'failed_count': 0,
+        'start_time': datetime.utcnow(),
+        'message': update.message.reply_to_message,
+        'task': None
+    })
+    
+    # Send initial broadcast confirmation
+    confirmation_msg = await update.message.reply_text(
+        f"📢 **Broadcast Started**\n\n"
+        f"📊 **Total Users:** `{total_users}`\n"
+        f"⏰ **Started:** `{broadcast_status['start_time'].strftime('%Y-%m-%d %H:%M:%S')}`\n\n"
+        f"🔄 **Preparing to send...**\n"
+        f"📤 **Progress:** `0%` (0/{total_users})\n"
+        f"✅ **Successful:** `0`\n"
+        f"❌ **Failed:** `0`",
+        reply_markup=InlineKeyboardMarkup([
+                [
+                 InlineKeyboardButton("🚫 Cancel Broadcast", callback_data="broadcast_cancel"),
+                 InlineKeyboardButton("❌ Close", callback_data="broadcast_close")
+                ]
+            ]),
+        parse_mode="Markdown"
+    )
+    
+    # Start the broadcast task
+    broadcast_status['task'] = asyncio.create_task(
+        send_broadcast_messages(context, confirmation_msg.message_id, update.effective_chat.id)
     )
 
+async def send_broadcast_messages(context, status_message_id, chat_id):
+    """Send broadcast messages to all users with progress updates"""
+    users = load_users()
+    
+    for index, user in enumerate(users):
+        # Check if broadcast was cancelled
+        if not broadcast_status['is_running']:
+            break
+        
+        user_id = user['id']
+        broadcast_status['current_index'] = index + 1
+        
+        try:
+            # Forward the message to user
+            await context.bot.copy_message(
+                chat_id=user_id,
+                from_chat_id=broadcast_status['message'].chat_id,
+                message_id=broadcast_status['message'].message_id
+            )
+            broadcast_status['success_count'] += 1
+            
+        except Exception as e:
+            print(f"Failed to send to user {user_id}: {e}")
+            broadcast_status['failed_count'] += 1
+        
+        # Update progress every 10 messages or for the last message
+        if (index + 1) % 10 == 0 or (index + 1) == len(users):
+            await update_broadcast_progress(context, status_message_id, chat_id)
+        
+        # Small delay to avoid hitting rate limits
+        await asyncio.sleep(0.1)
+    
+    # Broadcast completed
+    await finalize_broadcast(context, status_message_id, chat_id)
 
-async def cancel_broadcast(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """Handle broadcast cancel button."""
-    global BROADCAST_CANCELLED
+async def update_broadcast_progress(context, status_message_id, chat_id):
+    """Update the broadcast progress message"""
+    if not broadcast_status['is_running']:
+        return
+    
+    current = broadcast_status['current_index']
+    total = broadcast_status['total_users']
+    success = broadcast_status['success_count']
+    failed = broadcast_status['failed_count']
+    percentage = (current / total) * 100 if total > 0 else 0
+    
+    # Calculate ETA
+    if current > 0:
+        elapsed_time = (datetime.utcnow() - broadcast_status['start_time']).total_seconds()
+        time_per_user = elapsed_time / current
+        remaining_users = total - current
+        eta_seconds = remaining_users * time_per_user
+        eta_str = f"{int(eta_seconds // 60)}m {int(eta_seconds % 60)}s"
+    else:
+        eta_str = "Calculating..."
+    
+    # Create progress bar
+    progress_bar_length = 20
+    filled_length = int(progress_bar_length * current // total)
+    progress_bar = "█" * filled_length + "░" * (progress_bar_length - filled_length)
+    
+    status_text = (
+        f"📢 **Broadcast in Progress**\n\n"
+        f"📊 **Total Users:** `{total}`\n"
+        f"⏰ **Started:** `{broadcast_status['start_time'].strftime('%H:%M:%S')}`\n"
+        f"⏱️ **ETA:** `{eta_str}`\n\n"
+        f"`[{progress_bar}]`\n"
+        f"📤 **Progress:** `{percentage:.1f}%` ({current}/{total})\n"
+        f"✅ **Successful:** `{success}`\n"
+        f"❌ **Failed:** `{failed}`\n"
+        f"⏳ **Remaining:** `{total - current}`"
+    )
+    
+    try:
+        await context.bot.edit_message_text(
+            chat_id=chat_id,
+            message_id=status_message_id,
+            text=status_text,
+            reply_markup=InlineKeyboardMarkup([
+                [
+                 InlineKeyboardButton("🚫 Cancel Broadcast", callback_data="broadcast_cancel"),
+                 InlineKeyboardButton("❌ Close", callback_data="broadcast_close")
+                ]
+            ]),
+            parse_mode="Markdown"
+        )
+    except Exception as e:
+        print(f"Error updating progress: {e}")
+
+async def finalize_broadcast(context, status_message_id, chat_id):
+    """Send final broadcast summary"""
+    total = broadcast_status['total_users']
+    success = broadcast_status['success_count']
+    failed = broadcast_status['failed_count']
+    percentage = (success / total) * 100 if total > 0 else 0
+    
+    end_time = datetime.utcnow()
+    duration = end_time - broadcast_status['start_time']
+    duration_str = f"{int(duration.total_seconds() // 60)}m {int(duration.total_seconds() % 60)}s"
+    
+    if broadcast_status['is_running']:
+        status = "✅ **Broadcast Completed**"
+    else:
+        status = "🚫 **Broadcast Cancelled**"
+    
+    summary_text = (
+        f"{status}\n\n"
+        f"📊 **Total Users:** `{total}`\n"
+        f"⏰ **Duration:** `{duration_str}`\n"
+        f"📈 **Success Rate:** `{percentage:.1f}%`\n\n"
+        f"✅ **Successful:** `{success}`\n"
+        f"❌ **Failed:** `{failed}`\n"
+        f"📤 **Sent:** `{broadcast_status['current_index']}`\n"
+        f"⏳ **Skipped:** `{total - broadcast_status['current_index']}`"
+    )
+    
+    try:
+        await context.bot.edit_message_text(
+            chat_id=chat_id,
+            message_id=status_message_id,
+            text=summary_text,
+            reply_markup=InlineKeyboardMarkup([
+                [
+                  InlineKeyboardButton("🔄 New Broadcast", callback_data="broadcast_new"),
+                  InlineKeyboardButton("❌ Close", callback_data="broadcast_close")
+                ]
+            ]),
+            parse_mode="Markdown"
+        )
+    except Exception as e:
+        print(f"Error sending final summary: {e}")
+    
+    # Reset broadcast status
+    broadcast_status.update({
+        'is_running': False,
+        'current_index': 0,
+        'total_users': 0,
+        'success_count': 0,
+        'failed_count': 0,
+        'start_time': None,
+        'message': None,
+        'task': None
+    })
+
+async def broadcast_button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Handle broadcast button clicks"""
     query = update.callback_query
-    await query.answer("❌ Broadcast cancelled")
-    BROADCAST_CANCELLED = True
+    await query.answer()
+    
+    data = query.data
+    
+    if data == "broadcast_cancel":
+        if broadcast_status['is_running']:
+            # Cancel the broadcast
+            broadcast_status['is_running'] = False
+            if broadcast_status['task']:
+                broadcast_status['task'].cancel()
+            
+            await query.edit_message_text(
+                "🚫 **Broadcast Cancelled**\n\n"
+                "The broadcast has been stopped. Some users may have already received the message.",
+                reply_markup=InlineKeyboardMarkup([
+                [
+                  InlineKeyboardButton("🔄 New Broadcast", callback_data="broadcast_new"),
+                  InlineKeyboardButton("❌ Close", callback_data="broadcast_close")
+                ]
+            ]),
+                parse_mode="Markdown"
+            )
+        else:
+            await query.answer("No broadcast is currently running!", show_alert=True)
+    
+    elif data == "broadcast_new":
+        await query.edit_message_text(
+            "📢 **New Broadcast**\n\n"
+            "Reply to a message with /broadcast to start a new broadcast.",
+            parse_mode="Markdown"
+        )
+    
+    elif data == "broadcast_close":
+        await query.message.delete()
 
-
-# Register handlers in main.py or your setup function
-def register_broadcast_handlers(application):
-    application.add_handler(CommandHandler("broadcast", broadcast_command))
-    application.add_handler(CallbackQueryHandler(cancel_broadcast, pattern="^broadcast_cancel$"))
+# Command to check broadcast status
+@check_ban_and_register
+async def broadcast_status_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    user_id = update.effective_user.id
+    
+    if user_id != 5373577888:
+        await update.message.reply_text("❌ This command is only available for the bot owner!")
+        return
+    
+    if broadcast_status['is_running']:
+        current = broadcast_status['current_index']
+        total = broadcast_status['total_users']
+        success = broadcast_status['success_count']
+        failed = broadcast_status['failed_count']
+        percentage = (current / total) * 100
+        
+        status_text = (
+            f"📢 **Broadcast Running**\n\n"
+            f"📊 **Progress:** `{percentage:.1f}%` ({current}/{total})\n"
+            f"✅ **Successful:** `{success}`\n"
+            f"❌ **Failed:** `{failed}`\n"
+            f"⏳ **Remaining:** `{total - current}`\n\n"
+            f"⏰ **Started:** `{broadcast_status['start_time'].strftime('%H:%M:%S')}`"
+        )
+        
+        await update.message.reply_text(
+            status_text,
+            reply_markup=InlineKeyboardMarkup([
+                [
+                 InlineKeyboardButton("🚫 Cancel Broadcast", callback_data="broadcast_cancel"),
+                 InlineKeyboardButton("❌ Close", callback_data="broadcast_close")
+                ]
+            ]),
+            parse_mode="Markdown"
+        )
+    else:
+        await update.message.reply_text(
+            "📢 **No active broadcast**\n\n"
+            "There is no broadcast currently running.",
+            parse_mode="Markdown"
+    )
