@@ -8,7 +8,7 @@ from telegram.ext import ContextTypes, CommandHandler, CallbackQueryHandler
 from batch_link import handle_batch_start
 from force_sub import check_force_subscription
 from middleware import check_ban_and_register
-from shortener import load_shortener, shorten_url
+from shortened import load_shortener, shorten_url
 # Load settings
 def load_settings():
     try:
