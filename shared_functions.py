@@ -27,10 +27,6 @@ def load_settings():
             "protect_content": False
         }
 
-# Save settings
-def save_settings(settings):
-    with open('settings.json', 'w') as f:
-        json.dump(settings, f, indent=4)
         
 # Load links data
 def load_links():
