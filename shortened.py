@@ -251,14 +251,18 @@ async def detect_shortener_service(api_token: str):
     services = {
         "GPLinks": {
             "url": "https://gplinks.in/api",
-            "params": {"api": api_token, "url": test_url}
+            "method": "POST",  # GPLinks uses POST
+            "data": {"api": api_token, "url": test_url},
+            "headers": {"Content-Type": "application/x-www-form-urlencoded"}
         },
         "ShortConnect": {
             "url": "https://api.shortconnect.com/shorten",
+            "method": "GET",
             "params": {"api": api_token, "url": test_url}
         },
         "Dalink": {
             "url": "https://dalink.in/api",
+            "method": "GET", 
             "params": {"api": api_token, "url": test_url}
         }
     }
@@ -266,7 +270,12 @@ async def detect_shortener_service(api_token: str):
     for name, config in services.items():
         try:
             print(f"Testing {name} API...")
-            response = requests.get(config['url'], params=config['params'], timeout=10)
+            
+            if config['method'] == 'POST':
+                response = requests.post(config['url'], data=config['data'], headers=config.get('headers', {}), timeout=10)
+            else:
+                response = requests.get(config['url'], params=config.get('params', {}), timeout=10)
+                
             print(f"{name} Response Status: {response.status_code}")
             print(f"{name} Response Text: {response.text}")
             
@@ -282,7 +291,7 @@ async def detect_shortener_service(api_token: str):
     # If no specific service detected, assume generic
     print("⚠️ No specific service detected, using generic")
     return "Custom Shortener", "https://example.com"
-# Shortlink command
+#shortlink handler
 @check_ban_and_register
 async def shortlink_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = update.effective_user.id
@@ -363,21 +372,33 @@ async def shorten_url(api_key: str, url: str, website: str) -> str:
     """Shorten URL using the configured shortener service"""
     try:
         if "gplinks" in website.lower():
-            # GPLinks API implementation
+            # GPLinks API implementation - CORRECT VERSION
             api_url = "https://gplinks.in/api"
-            params = {
+            headers = {
+                "Content-Type": "application/x-www-form-urlencoded",
+                "Accept": "application/json"
+            }
+            data = {
                 "api": api_key,
                 "url": url
             }
-            response = requests.get(api_url, params=params, timeout=10)
+            
+            print(f"GPLinks Request: {data}")  # Debug print
+            
+            response = requests.post(api_url, data=data, headers=headers, timeout=10)
+            print(f"GPLinks Response Status: {response.status_code}")  # Debug print
+            print(f"GPLinks Response Text: {response.text}")  # Debug print
+            
             data = response.json()
             
-            print(f"GPLinks Response: {data}")  # Debug print
-            
             if data.get('status') == 'success':
-                return data.get('shortenedUrl', url)
+                shortened_url = data.get('shortenedUrl')
+                if shortened_url:
+                    return shortened_url
+                else:
+                    raise Exception("GPLinks: No shortened URL in response")
             else:
-                error_msg = data.get('msg', 'Unknown error from GPLinks')
+                error_msg = data.get('msg', data.get('message', 'Unknown error from GPLinks'))
                 raise Exception(f"GPLinks API error: {error_msg}")
                 
         elif "shortconnect" in website.lower():
@@ -389,8 +410,6 @@ async def shorten_url(api_key: str, url: str, website: str) -> str:
             }
             response = requests.get(api_url, params=params, timeout=10)
             data = response.json()
-            
-            print(f"ShortConnect Response: {data}")  # Debug print
             
             if data.get('status') == 'success':
                 return data.get('short_url', url)
@@ -408,8 +427,6 @@ async def shorten_url(api_key: str, url: str, website: str) -> str:
             response = requests.get(api_url, params=params, timeout=10)
             data = response.json()
             
-            print(f"Dalink Response: {data}")  # Debug print
-            
             if data.get('status') == 'success':
                 return data.get('shortenedUrl', url)
             else:
@@ -426,8 +443,6 @@ async def shorten_url(api_key: str, url: str, website: str) -> str:
             response = requests.get(api_url, params=params, timeout=10)
             data = response.json()
             
-            print(f"Generic Response: {data}")  # Debug print
-            
             # Try common response formats
             if data.get('status') == 'success':
                 return data.get('shortenedUrl', data.get('short_url', url))
@@ -442,7 +457,6 @@ async def shorten_url(api_key: str, url: str, website: str) -> str:
         raise Exception(f"Network error: {str(e)}")
     except Exception as e:
         raise Exception(f"Shortening failed: {str(e)}")
-        
 async def shortlink_button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Handle shortlink button clicks"""
     query = update.callback_query
