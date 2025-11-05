@@ -3,6 +3,7 @@ from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import ContextTypes
 from middleware import check_ban_and_register
 from loading import show_loading_placeholder
+import asyncio
 # Load admin data
 def load_admins():
     try:
