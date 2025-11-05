@@ -321,7 +321,7 @@ async def settings_button_handler(update: Update, context: ContextTypes.DEFAULT_
         [InlineKeyboardButton("✖ ᴄʟᴏsᴇ", callback_data="settings_close")],
        ]
 
-     reply_markup = InlineKeyboardMarkup(keyboard)
+       reply_markup = InlineKeyboardMarkup(keyboard)
 
     # Edit the existing message
      try:
