@@ -70,7 +70,7 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = query.from_user.id
     
     if data == "start_about":
-        loading_text = ("ᴘʟᴇᴀsᴇ ᴡᴀɪᴛ....")
+        loading_text = ("ᴘʟᴇᴀsᴇ ᴡᴀɪᴛ\\.\\.\\.\\.")
         about_text = (
             "*ʙᴏᴛ ɴᴀᴍᴇ* \\- *Rɪᴍᴜʀᴜ Tᴇᴍᴘᴇsᴛ*\n"
             "*ʙᴏᴛ ᴜsᴇʀɴᴀᴍᴇ* \\- *@Rimuru\\_filebot*\n"
