@@ -16,8 +16,8 @@ def load_settings():
             "start_text": "Hi {mention} welcome to File Store Bot",
             "help_text": "Available Commands:\\n\\n/start - Start the bot\\n/help - Show this help message\\n/genlink - Generate link\\n/batchlink - Generate batch links\\n/custombatch - Custom batch processing\\n/fsub - Force subscribe\\n/settings - Bot settings\\n/promote - Promote user to admin\\n/demote - Demote admin\\n/ban - Ban user\\n/unban - Unban user\\n/users - Show users\\n/admins - Show admins\\n/update - Update bot\\n/restart - Restart bot",
             "auto_delete_time": 10,
-            "protect_content": False
-            "settings_image": "",
+            "protect_content": False,
+            "settings_image": ""
         }
 
 # Save settings
@@ -36,16 +36,16 @@ def load_admins():
 async def settings_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = update.effective_user.id
     admins = load_admins()
-    
+
     # Check if user is admin or owner
     if user_id not in admins and user_id != 5373577888:
         await update.message.reply_text("You are not authorized to use this command!")
         return
-    
+
     settings = load_settings()
     auto_delete_time = settings.get("auto_delete_time", 10)
     protect_content = settings.get("protect_content", False)
-    
+
     settings_text = (
         "⚙️ **Bot Settings**\n\n"
         f"sᴛᴀʀᴛ ɪᴍᴀɢᴇ: {'✅ Set' if settings.get('start_image') and os.path.exists(settings.get('start_image')) else '❌ Not Set'}\n"
@@ -56,29 +56,62 @@ async def settings_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         f"sᴇᴛᴛɪɴɢs ɪᴍᴀɢᴇ: {'✅ Set' if settings.get('settings_image') and os.path.exists(settings.get('settings_image')) else '❌ Not Set'}\n"
         "sᴇʟᴇᴄᴛ ᴀɴ ᴏᴘᴛɪᴏɴ ᴛᴏ ᴄᴏɴғɪɢᴜʀᴇ:"
     )
-    
+
     keyboard = [
-    [InlineKeyboardButton("sᴛᴀʀᴛ ɪᴍᴀɢᴇ", callback_data="settings_start_img"),
-     InlineKeyboardButton("ʜᴇʟᴘ ɪᴍᴀɢᴇ", callback_data="settings_help_img")],
-
-    [InlineKeyboardButton("ᴀᴜᴛᴏ ᴅᴇʟᴇᴛᴇ", callback_data="settings_auto_delete"),
-     InlineKeyboardButton("ᴘʀᴏᴛᴇᴄᴛ ᴄᴏɴᴛᴇɴᴛ", callback_data="settings_protect_content")],
-
-    [InlineKeyboardButton("sᴛᴀʀᴛ ᴛᴇxᴛ", callback_data="settings_start_text"),
-     InlineKeyboardButton("ʜᴇʟᴘ ᴛᴇxᴛ", callback_data="settings_help_text")],
-
-    [InlineKeyboardButton("ғᴏʀᴄᴇ sᴜʙ ɪᴍᴀɢᴇ", callback_data="settings_force_sub_image"),
-     InlinekeyboardButton("sᴇᴛᴛɪɴɢs ɪᴍᴀɢᴇ", callback_data="settings_settings_image")]
-     [InlineKeyboardButton("✖ ᴄʟᴏsᴇ", callback_data="settings_close")]
+        [
+            InlineKeyboardButton("sᴛᴀʀᴛ ɪᴍᴀɢᴇ", callback_data="settings_start_img"),
+            InlineKeyboardButton("ʜᴇʟᴘ ɪᴍᴀɢᴇ", callback_data="settings_help_img"),
+        ],
+        [
+            InlineKeyboardButton("ᴀᴜᴛᴏ ᴅᴇʟᴇᴛᴇ", callback_data="settings_auto_delete"),
+            InlineKeyboardButton("ᴘʀᴏᴛᴇᴄᴛ ᴄᴏɴᴛᴇɴᴛ", callback_data="settings_protect_content"),
+        ],
+        [
+            InlineKeyboardButton("sᴛᴀʀᴛ ᴛᴇxᴛ", callback_data="settings_start_text"),
+            InlineKeyboardButton("ʜᴇʟᴘ ᴛᴇxᴛ", callback_data="settings_help_text"),
+        ],
+        [
+            InlineKeyboardButton("ғᴏʀᴄᴇ sᴜʙ ɪᴍᴀɢᴇ", callback_data="settings_force_sub_image"),
+            InlineKeyboardButton("sᴇᴛᴛɪɴɢs ɪᴍᴀɢᴇ", callback_data="settings_settings_image"),
+        ],
+        [InlineKeyboardButton("✖ ᴄʟᴏsᴇ", callback_data="settings_close")],
     ]
-    
-    reply_markup = InlineKeyboardMarkup(keyboard)
-    
-    if update.callback_query:
-        await update.callback_query.edit_message_text(settings_text, reply_markup=reply_markup, parse_mode="Markdown")
-    else:
-        await update.message.reply_text(settings_text, reply_markup=reply_markup, parse_mode="Markdown")
 
+    reply_markup = InlineKeyboardMarkup(keyboard)
+
+    settings_image = settings.get("settings_image")
+
+    # Try sending with image if available
+    if settings_image and os.path.exists(settings_image):
+        try:
+            if update.callback_query:
+                await update.callback_query.message.reply_photo(
+                    photo=open(settings_image, "rb"),
+                    caption=settings_text,
+                    reply_markup=reply_markup,
+                    parse_mode="Markdown",
+                )
+            else:
+                await update.message.reply_photo(
+                    photo=open(settings_image, "rb"),
+                    caption=settings_text,
+                    reply_markup=reply_markup,
+                    parse_mode="Markdown",
+                )
+            return  # ✅ Prevent sending text again
+        except Exception as e:
+            print(f"Error sending settings image: {e}")
+
+    # Fallback if image not found
+    if update.callback_query:
+        await update.callback_query.edit_message_text(
+            settings_text, reply_markup=reply_markup, parse_mode="Markdown"
+        )
+    else:
+        await update.message.reply_text(
+            settings_text, reply_markup=reply_markup, parse_mode="Markdown"
+        )
+        
 async def settings_button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
     await query.answer()
