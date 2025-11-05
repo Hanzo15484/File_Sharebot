@@ -205,4 +205,5 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     
     elif data == "start_close":
         await query.answer("ᴄʟᴏsᴇᴅ ❌", show_alert=False)
+        await asyncio.sleep(0.3)
         await query.message.delete()
