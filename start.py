@@ -2,7 +2,7 @@ import json
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import ContextTypes
 from middleware import check_ban_and_register
-
+from loading import show_loading_placeholder
 # Load admin data
 def load_admins():
     try:
@@ -86,6 +86,8 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
       ]
         ]
         reply_markup = InlineKeyboardMarkup(keyboard)
+
+        await show_loading_placeholder(query)
         
         # Check if message has photo (caption) or is text message
         if query.message.photo:
