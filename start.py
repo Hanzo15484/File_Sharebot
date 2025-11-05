@@ -205,4 +205,4 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     
     elif data == "start_close":
         await query.message.delete()
-        await query.answer("ᴄʟᴏsᴇᴅ ❌, show_alert=False")
+        await query.answer("ᴄʟᴏsᴇᴅ ❌", show_alert=False)
