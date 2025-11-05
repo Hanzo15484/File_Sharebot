@@ -250,10 +250,9 @@ async def detect_shortener_service(api_token: str):
     
     services = {
         "GPLinks": {
-            "url": "https://gplinks.in/api",
-            "method": "POST",  # GPLinks uses POST
-            "data": {"api": api_token, "url": test_url},
-            "headers": {"Content-Type": "application/x-www-form-urlencoded"}
+            "url": "https://api.gplinks.com/api",
+            "method": "GET",  # GPLinks uses POST
+            "params": {"api": api_token, "url": test_url},
         },
         "ShortConnect": {
             "url": "https://api.shortconnect.com/shorten",
@@ -373,8 +372,8 @@ async def shorten_url(api_key: str, url: str, website: str) -> str:
     try:
         if "gplinks" in website.lower():
             # ALTERNATIVE GPLinks API implementation
-            api_url = "https://gplinks.in/api.php"
-            payload = {
+            api_url = "https://api.gplinks.com/api"
+            params = {
                 "api": api_key,
                 "url": url
             }
@@ -384,7 +383,7 @@ async def shorten_url(api_key: str, url: str, website: str) -> str:
             # Try different content types
             try:
                 # Method 1: Form data
-                response = requests.post(api_url, data=payload, timeout=10)
+                response = requests.get(api_url, params=params, timeout=10)
                 print(f"GPLinks Response (Form): {response.status_code} - {response.text}")
                 
                 if response.status_code == 200:
@@ -393,7 +392,7 @@ async def shorten_url(api_key: str, url: str, website: str) -> str:
                         return data.get('shortenedUrl', url)
             except:
                 # Method 2: JSON data
-                response = requests.post(api_url, json=payload, timeout=10)
+                response = requests.get(api_url, json=params, timeout=10)
                 print(f"GPLinks Response (JSON): {response.status_code} - {response.text}")
                 
                 if response.status_code == 200:
