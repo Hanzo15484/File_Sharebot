@@ -141,7 +141,10 @@ async def settings_button_handler(update: Update, context: ContextTypes.DEFAULT_
         context.user_data['waiting_for'] = 'start_image'
         
     elif data == "settings_help_img":
-        await query.edit_message_text(
+        await query.edit_message_caption("*ᴘʟᴇᴀsᴇ ᴡᴀɪᴛ\\.\\.\\.\\.*",
+        parse_mode="MarkdownV2")
+        await asyncio.sleep(0.3)
+        await query.edit_message_caption(
             "📖 **Help Image Settings**\n\nɴᴏᴡ sᴇɴᴅ ᴍᴇ ɪᴍᴀɢᴇ ᴛʜᴀᴛ ʏᴏᴜ ᴡᴀɴᴛ ᴛᴏ sᴇᴛ ɪɴ ʜᴇʟᴘ ᴍᴏᴅᴜʟᴇ",
             reply_markup=InlineKeyboardMarkup([
                 [InlineKeyboardButton("《 ʙᴀᴄᴋ", callback_data="settings_back")]
@@ -151,7 +154,10 @@ async def settings_button_handler(update: Update, context: ContextTypes.DEFAULT_
         context.user_data['waiting_for'] = 'help_image'
         
     elif data == "settings_settings_image":
-        await query.edit_message_text(
+        await query.edit_message_caption("*ᴘʟᴇᴀsᴇ ᴡᴀɪᴛ\\.\\.\\.\\.*",
+        parse_mode="MarkdownV2")
+        await asyncio.sleep(0.3)
+        await query.edit_message_caption(
            "🖼️ **Settings Image Configuration**\n\nɴᴏᴡ sᴇɴᴅ ᴍᴇ ᴛʜᴇ ɪᴍᴀɢᴇ ᴛʜᴀᴛ ʏᴏᴜ ᴡᴀɴᴛ ᴛᴏ sᴇᴛ ғᴏʀ ᴛʜᴇ sᴇᴛᴛɪɴɢs ᴍᴏᴅᴜʟᴇ.",
             reply_markup=InlineKeyboardMarkup([
                 [InlineKeyboardButton("《 ʙᴀᴄᴋ", callback_data="settings_back")]
@@ -161,7 +167,10 @@ async def settings_button_handler(update: Update, context: ContextTypes.DEFAULT_
         context.user_data['waiting_for'] = 'settings_image'
         
     elif data == "settings_force_sub_image":
-        await query.edit_message_text(
+        await query.edit_message_caption("*ᴘʟᴇᴀsᴇ ᴡᴀɪᴛ\\.\\.\\.\\.*",
+        parse_mode="MarkdownV2")
+        await asyncio.sleep(0.3)
+        await query.edit_message_caption(
            "🔒 **Force Subscribe Image Settings**\n\nɴᴏᴡ sᴇɴᴅ ᴍᴇ ɪᴍᴀɢᴇ ᴛʜᴀᴛ ʏᴏᴜ ᴡᴀɴᴛ ᴛᴏ sᴇᴛ ɪɴ ғᴏʀᴄᴇ sᴜʙsᴄʀɪʙᴇ ᴍᴏᴅᴜʟᴇ",
             reply_markup=InlineKeyboardMarkup([
                 [InlineKeyboardButton("《 ʙᴀᴄᴋ", callback_data="settings_back")]
@@ -193,7 +202,10 @@ async def settings_button_handler(update: Update, context: ContextTypes.DEFAULT_
             [InlineKeyboardButton("《 ʙᴀᴄᴋ", callback_data="settings_back")]
         ]
         
-        await query.edit_message_text(
+        await query.edit_message_caption("*ᴘʟᴇᴀsᴇ ᴡᴀɪᴛ\\.\\.\\.\\.*",
+        parse_mode="MarkdownV2")
+        await asyncio.sleep(0.3)
+        await query.edit_message_caption(
             "⏰ **Auto Delete Settings**\n\nSelect time duration for auto deletion:",
             reply_markup=InlineKeyboardMarkup(keyboard),
             parse_mode="Markdown"
@@ -213,14 +225,20 @@ async def settings_button_handler(update: Update, context: ContextTypes.DEFAULT_
         ]
         
         status = "✅ Enabled" if protect_content else "❌ Disabled"
-        await query.edit_message_text(
+        await query.edit_message_caption("*ᴘʟᴇᴀsᴇ ᴡᴀɪᴛ\\.\\.\\.\\.*",
+        parse_mode="MarkdownV2")
+        await asyncio.sleep(0.3)
+        await query.edit_message_caption(
             f"🔒 **Protect Content Settings**\n\nCurrent status: {status}\n\nSelect forwarding option:",
             reply_markup=InlineKeyboardMarkup(keyboard),
             parse_mode="Markdown"
         )
         
     elif data == "settings_start_text":
-        await query.edit_message_text(
+        await query.edit_message_caption("*ᴘʟᴇᴀsᴇ ᴡᴀɪᴛ\\.\\.\\.\\.*",
+        parse_mode="MarkdownV2")
+        await asyncio.sleep(0.3)
+        await query.edit_message_caption(
             "📝 **Start Text Settings**\n\nSend me the new start text. You can use {mention} for user mention.",
             reply_markup=InlineKeyboardMarkup([
                 [InlineKeyboardButton("《 ʙᴀᴄᴋ", callback_data="settings_back")]
@@ -230,7 +248,10 @@ async def settings_button_handler(update: Update, context: ContextTypes.DEFAULT_
         context.user_data['waiting_for'] = 'start_text'
         
     elif data == "settings_help_text":
-        await query.edit_message_text(
+        await query.edit_message_caption("*ᴘʟᴇᴀsᴇ ᴡᴀɪᴛ\\.\\.\\.\\.*",
+        parse_mode="MarkdownV2")
+        await asyncio.sleep(0.3)
+        await query.edit_message_caption(
             "📋 **Help Text Settings**\n\nSend me the new help text.",
             reply_markup=InlineKeyboardMarkup([
                 [InlineKeyboardButton("《 ʙᴀᴄᴋ", callback_data="settings_back")]
