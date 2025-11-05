@@ -282,61 +282,61 @@ async def settings_button_handler(update: Update, context: ContextTypes.DEFAULT_
         # Go back to protect content menu to show updated buttons
         await settings_button_handler(update, context)
         
-  elif data == "settings_back":
+    elif data == "settings_back":
     # Edit the same message instead of sending a new one
-    query = update.callback_query
-    settings = load_settings()
+      query = update.callback_query
+      settings = load_settings()
 
-    auto_delete_time = settings.get("auto_delete_time", 10)
-    protect_content = settings.get("protect_content", False)
+      auto_delete_time = settings.get("auto_delete_time", 10)
+      protect_content = settings.get("protect_content", False)
 
-    settings_text = (
-        "⚙️ **Bot Settings**\n\n"
-        f"sᴛᴀʀᴛ ɪᴍᴀɢᴇ: {'✅ Set' if settings.get('start_image') and os.path.exists(settings.get('start_image')) else '❌ Not Set'}\n"
-        f"ʜᴇʟᴘ ɪᴍᴀɢᴇ: {'✅ Set' if settings.get('help_image') and os.path.exists(settings.get('help_image')) else '❌ Not Set'}\n"
-        f"ᴀᴜᴛᴏ ᴅᴇʟᴇᴛᴇ: {auto_delete_time} minutes\n"
-        f"ᴘʀᴏᴛᴇᴄᴛ ᴄᴏɴᴛᴇɴᴛ: {'✅ ON' if protect_content else '❌ OFF'}\n\n"
-        f"ғᴏʀᴄᴇ sᴜʙ ɪᴍᴀɢᴇ: {'✅ Set' if settings.get('force_sub_image') and os.path.exists(settings.get('force_sub_image')) else '❌ Not Set'}\n"
-        f"sᴇᴛᴛɪɴɢs ɪᴍᴀɢᴇ: {'✅ Set' if settings.get('settings_image') and os.path.exists(settings.get('settings_image')) else '❌ Not Set'}\n"
-        "sᴇʟᴇᴄᴛ ᴀɴ ᴏᴘᴛɪᴏɴ ᴛᴏ ᴄᴏɴғɪɢᴜʀᴇ:"
-    )
+      settings_text = (
+         "⚙️ **Bot Settings**\n\n"
+         f"sᴛᴀʀᴛ ɪᴍᴀɢᴇ: {'✅ Set' if settings.get('start_image') and os.path.exists(settings.get('start_image')) else '❌ Not Set'}\n"
+         f"ʜᴇʟᴘ ɪᴍᴀɢᴇ: {'✅ Set' if settings.get('help_image') and os.path.exists(settings.get('help_image')) else '❌ Not Set'}\n"
+         f"ᴀᴜᴛᴏ ᴅᴇʟᴇᴛᴇ: {auto_delete_time} minutes\n"
+         f"ᴘʀᴏᴛᴇᴄᴛ ᴄᴏɴᴛᴇɴᴛ: {'✅ ON' if protect_content else '❌ OFF'}\n\n"
+         f"ғᴏʀᴄᴇ sᴜʙ ɪᴍᴀɢᴇ: {'✅ Set' if settings.get('force_sub_image') and os.path.exists(settings.get('force_sub_image')) else '❌ Not Set'}\n"
+         f"sᴇᴛᴛɪɴɢs ɪᴍᴀɢᴇ: {'✅ Set' if settings.get('settings_image') and os.path.exists(settings.get('settings_image')) else '❌ Not Set'}\n"
+         "sᴇʟᴇᴄᴛ ᴀɴ ᴏᴘᴛɪᴏɴ ᴛᴏ ᴄᴏɴғɪɢᴜʀᴇ:"
+      )
 
-    keyboard = [
-        [
+      keyboard = [
+          [
             InlineKeyboardButton("sᴛᴀʀᴛ ɪᴍᴀɢᴇ", callback_data="settings_start_img"),
             InlineKeyboardButton("ʜᴇʟᴘ ɪᴍᴀɢᴇ", callback_data="settings_help_img"),
-        ],
-        [
+          ],
+          [
             InlineKeyboardButton("ᴀᴜᴛᴏ ᴅᴇʟᴇᴛᴇ", callback_data="settings_auto_delete"),
             InlineKeyboardButton("ᴘʀᴏᴛᴇᴄᴛ ᴄᴏɴᴛᴇɴᴛ", callback_data="settings_protect_content"),
-        ],
-        [
+         ],
+         [
             InlineKeyboardButton("sᴛᴀʀᴛ ᴛᴇxᴛ", callback_data="settings_start_text"),
             InlineKeyboardButton("ʜᴇʟᴘ ᴛᴇxᴛ", callback_data="settings_help_text"),
-        ],
-        [
+         ],
+         [
             InlineKeyboardButton("ғᴏʀᴄᴇ sᴜʙ ɪᴍᴀɢᴇ", callback_data="settings_force_sub_image"),
             InlineKeyboardButton("sᴇᴛᴛɪɴɢs ɪᴍᴀɢᴇ", callback_data="settings_settings_image"),
         ],
         [InlineKeyboardButton("✖ ᴄʟᴏsᴇ", callback_data="settings_close")],
-    ]
+       ]
 
-    reply_markup = InlineKeyboardMarkup(keyboard)
+     reply_markup = InlineKeyboardMarkup(keyboard)
 
     # Edit the existing message
-    try:
-        await query.edit_message_caption(
-            caption=settings_text,
-            reply_markup=reply_markup,
-            parse_mode="Markdown"
-        )
-    except Exception:
+     try:
+         await query.edit_message_caption(
+             caption=settings_text,
+             reply_markup=reply_markup,
+             parse_mode="Markdown"
+         )
+     except Exception:
         # If no caption (for text-only), fallback to edit_message_text
-        await query.edit_message_text(
+         await query.edit_message_text(
             text=settings_text,
             reply_markup=reply_markup,
             parse_mode="Markdown"
-    )
+      )
         
     elif data == "settings_close":
         await query.message.delete()
