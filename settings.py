@@ -128,9 +128,9 @@ async def settings_button_handler(update: Update, context: ContextTypes.DEFAULT_
     settings = load_settings()
     
     if data == "settings_start_img":
-        await query.edit_message_text("*ᴘʟᴇᴀsᴇ ᴡᴀɪᴛ\\.\\.\\.\\.*")
+        await query.edit_message_caption("*ᴘʟᴇᴀsᴇ ᴡᴀɪᴛ\\.\\.\\.\\.*")
         await asyncio.sleep(0.3)
-        await query.edit_message_text(
+        await query.edit_message_caption(
             "🖼️ **Start Image Settings**\n\nɴᴏᴡ sᴇɴᴅ ᴍᴇ ɪᴍᴀɢᴇ ᴛʜᴀᴛ ʏᴏᴜ ᴡᴀɴᴛ ᴛᴏ sᴇᴛ ɪɴ sᴛᴀʀᴛ ᴍᴏᴅᴜʟᴇ",
             reply_markup=InlineKeyboardMarkup([
                 [InlineKeyboardButton("《 ʙᴀᴄᴋ", callback_data="settings_back")]
