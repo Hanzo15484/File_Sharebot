@@ -282,7 +282,7 @@ async def settings_button_handler(update: Update, context: ContextTypes.DEFAULT_
         # Go back to protect content menu to show updated buttons
         await settings_button_handler(update, context)
         
-elif data == "settings_back":
+  elif data == "settings_back":
     # Edit the same message instead of sending a new one
     query = update.callback_query
     settings = load_settings()
