@@ -88,6 +88,8 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         reply_markup = InlineKeyboardMarkup(keyboard)
 
         await show_loading_placeholder(query)
+
+        await asyncio.sleep(0.3)
         
         # Check if message has photo (caption) or is text message
         if query.message.photo:
