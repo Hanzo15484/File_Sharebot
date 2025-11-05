@@ -317,6 +317,11 @@ async def settings_button_handler(update: Update, context: ContextTypes.DEFAULT_
     # BACK BUTTON
     elif data == "settings_back":
         settings = load_settings()
+        await query.edit_message_caption(
+            "*ᴘʟᴇᴀsᴇ ᴡᴀɪᴛ\\.\\.\\.\\.*",
+            parse_mode="MarkdownV2"
+        )
+        await asyncio.sleep(0.3)
         auto_delete_time = settings.get("auto_delete_time", 10)
         protect_content = settings.get("protect_content", False)
 
