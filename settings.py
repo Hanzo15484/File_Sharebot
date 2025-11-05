@@ -128,7 +128,8 @@ async def settings_button_handler(update: Update, context: ContextTypes.DEFAULT_
     settings = load_settings()
     
     if data == "settings_start_img":
-        await query.edit_message_caption("*ᴘʟᴇᴀsᴇ ᴡᴀɪᴛ\\.\\.\\.\\.*")
+        await query.edit_message_caption("*ᴘʟᴇᴀsᴇ ᴡᴀɪᴛ\\.\\.\\.\\.*",
+        parse_mode="MarkdownV2")
         await asyncio.sleep(0.3)
         await query.edit_message_caption(
             "🖼️ **Start Image Settings**\n\nɴᴏᴡ sᴇɴᴅ ᴍᴇ ɪᴍᴀɢᴇ ᴛʜᴀᴛ ʏᴏᴜ ᴡᴀɴᴛ ᴛᴏ sᴇᴛ ɪɴ sᴛᴀʀᴛ ᴍᴏᴅᴜʟᴇ",
