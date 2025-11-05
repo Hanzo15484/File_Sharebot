@@ -135,7 +135,7 @@ async def settings_button_handler(update: Update, context: ContextTypes.DEFAULT_
             reply_markup=InlineKeyboardMarkup([
                 [InlineKeyboardButton("《 ʙᴀᴄᴋ", callback_data="settings_back")]
             ]),
-            parse_mode="Markdown"
+            parse_mode="Markdownv2"
         )
         context.user_data['waiting_for'] = 'start_image'
         
