@@ -2,7 +2,7 @@ import os
 import json
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import ContextTypes, CommandHandler, CallbackQueryHandler, MessageHandler, filters
-
+import asyncio
 # Load settings
 def load_settings():
     try:
@@ -17,6 +17,7 @@ def load_settings():
             "help_text": "Available Commands:\\n\\n/start - Start the bot\\n/help - Show this help message\\n/genlink - Generate link\\n/batchlink - Generate batch links\\n/custombatch - Custom batch processing\\n/fsub - Force subscribe\\n/settings - Bot settings\\n/promote - Promote user to admin\\n/demote - Demote admin\\n/ban - Ban user\\n/unban - Unban user\\n/users - Show users\\n/admins - Show admins\\n/update - Update bot\\n/restart - Restart bot",
             "auto_delete_time": 10,
             "protect_content": False
+            "settings_image": "",
         }
 
 # Save settings
@@ -52,6 +53,7 @@ async def settings_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         f"ᴀᴜᴛᴏ ᴅᴇʟᴇᴛᴇ: {auto_delete_time} minutes\n"
         f"ᴘʀᴏᴛᴇᴄᴛ ᴄᴏɴᴛᴇɴᴛ: {'✅ ON' if protect_content else '❌ OFF'}\n\n"
         f"ғᴏʀᴄᴇ sᴜʙ ɪᴍᴀɢᴇ: {'✅ Set' if settings.get('force_sub_image') and os.path.exists(settings.get('force_sub_image')) else '❌ Not Set'}\n"
+        f"sᴇᴛᴛɪɴɢs ɪᴍᴀɢᴇ: {'✅ Set' if settings.get('settings_image') and os.path.exists(settings.get('settings_image')) else '❌ Not Set'}\n"
         "sᴇʟᴇᴄᴛ ᴀɴ ᴏᴘᴛɪᴏɴ ᴛᴏ ᴄᴏɴғɪɢᴜʀᴇ:"
     )
     
@@ -65,8 +67,8 @@ async def settings_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     [InlineKeyboardButton("sᴛᴀʀᴛ ᴛᴇxᴛ", callback_data="settings_start_text"),
      InlineKeyboardButton("ʜᴇʟᴘ ᴛᴇxᴛ", callback_data="settings_help_text")],
 
-    [InlineKeyboardButton("ғᴏʀᴄᴇ sᴜʙ ɪᴍᴀɢᴇ", callback_data="settings_force_sub_image")],
-
+    [InlineKeyboardButton("ғᴏʀᴄᴇ sᴜʙ ɪᴍᴀɢᴇ", callback_data="settings_force_sub_image"),
+     InlinekeyboardButton("sᴇᴛᴛɪɴɢs ɪᴍᴀɢᴇ", callback_data="settings_settings_image")]
      [InlineKeyboardButton("✖ ᴄʟᴏsᴇ", callback_data="settings_close")]
     ]
     
@@ -111,7 +113,17 @@ async def settings_button_handler(update: Update, context: ContextTypes.DEFAULT_
             parse_mode="Markdown"
         )
         context.user_data['waiting_for'] = 'help_image'
-
+        
+    elif data == "settings_settings_image":
+        await query.edit_message_text(
+           "🖼️ **Settings Image Configuration**\n\nɴᴏᴡ sᴇɴᴅ ᴍᴇ ᴛʜᴇ ɪᴍᴀɢᴇ ᴛʜᴀᴛ ʏᴏᴜ ᴡᴀɴᴛ ᴛᴏ sᴇᴛ ғᴏʀ ᴛʜᴇ sᴇᴛᴛɪɴɢs ᴍᴏᴅᴜʟᴇ.",
+            reply_markup=InlineKeyboardMarkup([
+                [InlineKeyboardButton("《 ʙᴀᴄᴋ", callback_data="settings_back")]
+            ]),
+            parse_mode="Markdown"
+        )
+        context.user_data['waiting_for'] = 'settings_image'
+        
     elif data == "settings_force_sub_image":
         await query.edit_message_text(
            "🔒 **Force Subscribe Image Settings**\n\nɴᴏᴡ sᴇɴᴅ ᴍᴇ ɪᴍᴀɢᴇ ᴛʜᴀᴛ ʏᴏᴜ ᴡᴀɴᴛ ᴛᴏ sᴇᴛ ɪɴ ғᴏʀᴄᴇ sᴜʙsᴄʀɪʙᴇ ᴍᴏᴅᴜʟᴇ",
@@ -234,7 +246,7 @@ async def settings_message_handler(update: Update, context: ContextTypes.DEFAULT
     
     settings = load_settings()
     
-    if waiting_for in ['start_image', 'help_image']:
+    if waiting_for in ['start_image', 'help_image', 'settings_image']:
         if update.message.photo:
             # Get the largest photo
             photo = update.message.photo[-1]
