@@ -2,7 +2,6 @@ import json
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import ContextTypes
 from middleware import check_ban_and_register
-from loading import show_loading_placeholder
 import asyncio
 # Load admin data
 def load_admins():
@@ -71,6 +70,7 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = query.from_user.id
     
     if data == "start_about":
+        loading_text = ("ᴘʟᴇᴀsᴇ ᴡᴀɪᴛ....")
         about_text = (
             "*ʙᴏᴛ ɴᴀᴍᴇ* \\- *Rɪᴍᴜʀᴜ Tᴇᴍᴘᴇsᴛ*\n"
             "*ʙᴏᴛ ᴜsᴇʀɴᴀᴍᴇ* \\- *@Rimuru\\_filebot*\n"
@@ -87,8 +87,17 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
       ]
         ]
         reply_markup = InlineKeyboardMarkup(keyboard)
-
-        await show_loading_placeholder(query)
+        if query.message.photo:
+            await query.edit_message_caption(
+                caption=loading_text,
+                reply_markup=reply_markup,
+                parse_mode="MarkdownV2",
+            )
+        else:
+            await query.edit_message_text(
+                text=loading_text,
+                reply_markup=reply_markup
+            )
 
         await asyncio.sleep(0.3)
         
