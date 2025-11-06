@@ -384,7 +384,12 @@ async def settings_button_handler(update: Update, context: ContextTypes.DEFAULT_
             save_settings(settings)
             await query.answer("Protect content disabled!", show_alert=True)
             await show_updated_protect_menu(query, False)
-    
+
+    elif data == "protect_forward":
+    await query.answer(
+        "ᴘʟᴇᴀsᴇ ᴄʜᴏᴏsᴇ ᴛʜᴇ ᴏᴘᴛɪᴏɴ ʙᴇʟᴏᴡ:",
+        show_alert=True
+    )
     # BACK BUTTON
     elif data == "settings_back":
         settings = load_settings()
