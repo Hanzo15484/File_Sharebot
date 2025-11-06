@@ -73,7 +73,36 @@ async def show_updated_auto_delete_menu(query, selected):
             reply_markup=InlineKeyboardMarkup(keyboard),
             parse_mode="MarkdownV2"
         )
-        
+
+async def show_updated_protect_menu(query, is_enabled):
+    on_text  = "✅ ᴏɴ" if is_enabled else "ᴏɴ"
+    off_text = "✅ ᴏғғ" if not is_enabled else "ᴏғғ"
+
+    keyboard = [
+        [InlineKeyboardButton("ғᴏʀᴡᴀʀᴅ", callback_data="protect_forward")],
+        [
+            InlineKeyboardButton(on_text, callback_data="protect_on"),
+            InlineKeyboardButton(off_text, callback_data="protect_off")
+        ],
+        [InlineKeyboardButton("《 ʙᴀᴄᴋ", callback_data="settings_back")]
+    ]
+
+    text = f"🔒 **Protect Content Settings**\n\nCurrent status: {'✅ Enabled' if is_enabled else '❌ Disabled'}\n\nSelect forwarding option:"
+
+    # Detect if message is photo or text
+    if query.message.photo:
+        await query.edit_message_caption(
+            caption=text,
+            reply_markup=InlineKeyboardMarkup(keyboard),
+            parse_mode="MarkdownV2"
+        )
+    else:
+        await query.edit_message_text(
+            text=text,
+            reply_markup=InlineKeyboardMarkup(keyboard),
+            parse_mode="MarkdownV2"
+        )
+
 async def settings_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = update.effective_user.id
     admins = load_admins()
@@ -353,8 +382,8 @@ async def settings_button_handler(update: Update, context: ContextTypes.DEFAULT_
             settings["protect_content"] = False
             save_settings(settings)
             await query.answer("Protect content disabled!", show_alert=True)
-        await settings_button_handler(update, context)
-
+            await show_updated_protect_menu(query, settings["protect_content"])
+    
     # BACK BUTTON
     elif data == "settings_back":
         settings = load_settings()
