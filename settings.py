@@ -167,7 +167,7 @@ async def settings_button_handler(update: Update, context: ContextTypes.DEFAULT_
         )
         await asyncio.sleep(0.3)
         await query.edit_message_caption(
-            "🖼️ **Settings Image Configuration**\n\nɴᴏᴡ sᴇɴᴅ ᴍᴇ ᴛʜᴇ ɪᴍᴀɢᴇ ᴛʜᴀᴛ ʏᴏᴜ ᴡᴀɴᴛ ᴛᴏ sᴇᴛ ғᴏʀ ᴛʜᴇ sᴇᴛᴛɪɴɢs ᴍᴏᴅᴜʟᴇ.",
+            "🖼️ **Settings Image Configuration**\n\nɴᴏᴡ sᴇɴᴅ ᴍᴇ ᴛʜᴇ ɪᴍᴀɢᴇ ᴛʜᴀᴛ ʏᴏᴜ ᴡᴀɴᴛ ᴛᴏ sᴇᴛ ғᴏʀ ᴛʜᴇ sᴇᴛᴛɪɴɢs ᴍᴏᴅᴜʟᴇ",
             reply_markup=InlineKeyboardMarkup([
                 [InlineKeyboardButton("《 ʙᴀᴄᴋ", callback_data="settings_back")]
             ]),
