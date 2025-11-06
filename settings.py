@@ -317,6 +317,7 @@ async def settings_button_handler(update: Update, context: ContextTypes.DEFAULT_
     # BACK BUTTON
     elif data == "settings_back":
         settings = load_settings()
+        context.user_data.pop('waiting_for', None)
         await query.edit_message_caption(
             "*ᴘʟᴇᴀsᴇ ᴡᴀɪᴛ\\.\\.\\.\\.*",
             parse_mode="MarkdownV2"
