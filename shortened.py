@@ -393,7 +393,8 @@ async def shorten_url(api_key: str, url: str, website: str) -> str:
                 else:
                     raise Exception(f"GPlink API error: {data}")         
             else:
-                raise Exception(f"GPlink request failed: HTTP {response.status_code}")
+                except Exception as e:
+                    (f"GPlink request failed: HTTP {e}")
         # ... rest of the function remains the same
         elif "shortconnect" in website.lower():
             # ShortConnect API implementation
