@@ -370,88 +370,103 @@ async def generate_shortened_link(update: Update, context: ContextTypes.DEFAULT_
 async def shorten_url(api_key: str, url: str, website: str) -> str:
     """Shorten URL using the configured shortener service"""
     try:
+
+        # ✅ GPLinks (official developer API)
         if "gplinks" in website.lower():
-            # ALTERNATIVE GPLinks API implementation
             api_url = "https://api.gplinks.com/api"
             params = {
                 "api": api_key,
                 "url": url
             }
-            
-            print(f"GPLinks Request: {params}")
-            
-            # Try different content types
+
+            print(f"[GPLinks] Request → {params}")
+
             try:
-                # Method 1: Form data
                 response = requests.get(api_url, params=params, timeout=10)
-                print(f"GPLinks Response (Form): {response.status_code} - {response.text}")
-                
-                if response.status_code == 200:
-                    data = response.json()
-                    if data.get('status') == 'success':
-                        return data.get('shortenedUrl', url)
-                else:
-                    raise Exception(f"GPlink API error: {data}")         
+            except Exception as e:
+                raise Exception(f"GPLinks request failed: {str(e)}")
+
+            print(f"[GPLinks] Response ({response.status_code}) → {response.text}")
+
+            if response.status_code != 200:
+                raise Exception(f"GPLinks HTTP error {response.status_code}")
+
+            try:
+                data = response.json()
+            except:
+                raise Exception(f"GPLinks returned non-JSON: {response.text}")
+
+            if data.get("status") == "success":
+                return data.get("shortenedUrl", url)
             else:
-                except Exception as e:
-                    (f"GPlink request failed: HTTP {e}")
-        # ... rest of the function remains the same
+                raise Exception(f"GPLinks API error: {data}")
+
+        # ✅ ShortConnect
         elif "shortconnect" in website.lower():
-            # ShortConnect API implementation
             api_url = "https://api.shortconnect.com/shorten"
-            params = {
-                "api": api_key,
-                "url": url
-            }
+            params = {"api": api_key, "url": url}
+
             response = requests.get(api_url, params=params, timeout=10)
-            data = response.json()
-            
-            if data.get('status') == 'success':
-                return data.get('short_url', url)
+
+            try:
+                data = response.json()
+            except:
+                raise Exception(f"ShortConnect returned non-JSON: {response.text}")
+
+            if data.get("status") == "success":
+                return data.get("short_url", url)
             else:
-                error_msg = data.get('message', 'Unknown error from ShortConnect')
-                raise Exception(f"ShortConnect API error: {error_msg}")
-                
+                msg = data.get("message", "Unknown error from ShortConnect")
+                raise Exception(f"ShortConnect API error: {msg}")
+
+        # ✅ Dalink (if reachable)
         elif "dalink" in website.lower():
-            # Dalink API implementation
             api_url = "https://dalink.in/api"
-            params = {
-                "api": api_key,
-                "url": url
-            }
+            params = {"api": api_key, "url": url}
+
             response = requests.get(api_url, params=params, timeout=10)
-            data = response.json()
-            
-            if data.get('status') == 'success':
-                return data.get('shortenedUrl', url)
+
+            try:
+                data = response.json()
+            except:
+                raise Exception(f"Dalink returned non-JSON: {response.text}")
+
+            if data.get("status") == "success":
+                return data.get("shortenedUrl", url)
             else:
-                error_msg = data.get('msg', 'Unknown error from Dalink')
-                raise Exception(f"Dalink API error: {error_msg}")
-                
+                msg = data.get("msg", "Unknown error from Dalink")
+                raise Exception(f"Dalink API error: {msg}")
+
+        # ✅ Generic API-compatible shorteners
         else:
-            # Generic shortener implementation
             api_url = f"{website}/api"
-            params = {
-                "api": api_key,
-                "url": url
-            }
+            params = {"api": api_key, "url": url}
+
             response = requests.get(api_url, params=params, timeout=10)
-            data = response.json()
-            
-            # Try common response formats
-            if data.get('status') == 'success':
-                return data.get('shortenedUrl', data.get('short_url', url))
-            elif 'shortenedUrl' in data:
-                return data['shortenedUrl']
-            elif 'short_url' in data:
-                return data['short_url']
-            else:
-                raise Exception(f"Unknown response format: {data}")
-            
+
+            try:
+                data = response.json()
+            except:
+                raise Exception(f"Shortener returned non-JSON: {response.text}")
+
+            # Universal JSON patterns
+            if data.get("status") == "success":
+                return data.get("shortenedUrl", data.get("short_url", url))
+
+            if "shortenedUrl" in data:
+                return data["shortenedUrl"]
+
+            if "short_url" in data:
+                return data["short_url"]
+
+            raise Exception(f"Unknown API format: {data}")
+
     except requests.exceptions.RequestException as e:
         raise Exception(f"Network error: {str(e)}")
+
     except Exception as e:
         raise Exception(f"Shortening failed: {str(e)}")
+        
 async def shortlink_button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Handle shortlink button clicks"""
     query = update.callback_query
