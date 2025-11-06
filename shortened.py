@@ -251,7 +251,7 @@ async def detect_shortener_service(api_token: str):
     services = {
         "GPLinks": {
             "url": "https://api.gplinks.com/api",
-            "method": "GET",  # GPLinks uses POST
+            "method": "GET",  # GPLinks uses GET
             "params": {"api": api_token, "url": test_url},
         },
         "ShortConnect": {
@@ -378,7 +378,7 @@ async def shorten_url(api_key: str, url: str, website: str) -> str:
                 "url": url
             }
             
-            print(f"GPLinks Request: {payload}")
+            print(f"GPLinks Request: {params}")
             
             # Try different content types
             try:
@@ -390,19 +390,10 @@ async def shorten_url(api_key: str, url: str, website: str) -> str:
                     data = response.json()
                     if data.get('status') == 'success':
                         return data.get('shortenedUrl', url)
-            except:
-                # Method 2: JSON data
-                response = requests.get(api_url, json=params, timeout=10)
-                print(f"GPLinks Response (JSON): {response.status_code} - {response.text}")
-                
-                if response.status_code == 200:
-                    data = response.json()
-                    if data.get('status') == 'success':
-                        return data.get('shortenedUrl', url)
-            
-            # If we get here, both methods failed
-            raise Exception("GPLinks: API request failed")
-                
+                else:
+                    raise Exception(f"GPlink API error: {data}")         
+            else:
+                raise Exception(f"GPlink request failed: HTTP {response.status_code}")
         # ... rest of the function remains the same
         elif "shortconnect" in website.lower():
             # ShortConnect API implementation
@@ -498,4 +489,4 @@ async def shortlink_button_handler(update: Update, context: ContextTypes.DEFAULT
                 f"Error: {str(e)}\n\n"
                 f"Please check your API settings.",
                 parse_mode="Markdown"
-      )
+             )
