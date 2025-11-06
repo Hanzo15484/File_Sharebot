@@ -33,6 +33,47 @@ def load_admins():
     except:
         return [5373577888]
 
+async def show_updated_auto_delete_menu(query, selected):
+    def btn(label, value):
+        return f"✅ {label}" if selected == value else label
+
+    keyboard = [
+        [
+            InlineKeyboardButton(btn("5 ᴍɪɴ", 5), callback_data="auto_delete_5"),
+            InlineKeyboardButton(btn("10 ᴍɪɴ", 10), callback_data="auto_delete_10"),
+        ],
+        [
+            InlineKeyboardButton(btn("15 ᴍɪɴ", 15), callback_data="auto_delete_15"),
+            InlineKeyboardButton(btn("20 ᴍɪɴ", 20), callback_data="auto_delete_20"),
+        ],
+        [
+            InlineKeyboardButton(btn("30 ᴍɪɴ", 30), callback_data="auto_delete_30"),
+            InlineKeyboardButton(btn("45 ᴍɪɴ", 45), callback_data="auto_delete_45"),
+        ],
+        [
+            InlineKeyboardButton(btn("1 ʜʀ", 60), callback_data="auto_delete_60"),
+            InlineKeyboardButton(btn("3 ʜʀ", 180), callback_data="auto_delete_180"),
+        ],
+        [InlineKeyboardButton(btn("ᴅɪsᴀʙʟᴇ", 0), callback_data="auto_delete_0")],
+        [InlineKeyboardButton("《 ʙᴀᴄᴋ", callback_data="settings_back")],
+    ]
+
+    text = "⏰ **Auto Delete Settings**\n\nSelect time duration:"
+    
+    # Detect message type
+    if query.message.photo:
+        await query.edit_message_caption(
+            caption=text,
+            reply_markup=InlineKeyboardMarkup(keyboard),
+            parse_mode="MarkdownV2"
+        )
+    else:
+        await query.edit_message_text(
+            text=text,
+            reply_markup=InlineKeyboardMarkup(keyboard),
+            parse_mode="MarkdownV2"
+        )
+        
 async def settings_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = update.effective_user.id
     admins = load_admins()
@@ -300,7 +341,7 @@ async def settings_button_handler(update: Update, context: ContextTypes.DEFAULT_
 
         status = "Disabled" if time_minutes == 0 else f"{time_minutes} minutes"
         await query.answer(f"Auto delete set to {status}!", show_alert=True)
-        await settings_button_handler(update, context)
+        await show_updated_auto_delete_menu(query, time_minutes)
 
     # PROTECT CONTENT TOGGLE
     elif data.startswith("protect_"):
