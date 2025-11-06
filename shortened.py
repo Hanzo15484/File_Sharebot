@@ -342,7 +342,7 @@ async def generate_shortened_link(update: Update, context: ContextTypes.DEFAULT_
     encoded_id = encode_file_id(file_id)
 
     bot_username = context.bot.username
-    original_link = f"https://{bot_username}?start={encoded_id}"
+    original_link = f"https://t.me/{bot_username}?start={encoded_id}"
     
     try:
         shortened_url = await shorten_url(api_key, original_link, website)
