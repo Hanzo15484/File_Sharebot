@@ -338,7 +338,7 @@ async def settings_button_handler(update: Update, context: ContextTypes.DEFAULT_
         )
         await asyncio.sleep(0.3)
         await query.edit_message_caption(
-            "📝 **Start Text Settings**\n\nSend me the new start text\\. You can use {mention} for user mention\\.",
+            "📝 **Start Text Settings**\n\nSend me the new start text\\. You can use \\{mention\\} for user mention\\.",
             reply_markup=InlineKeyboardMarkup([
                 [InlineKeyboardButton("《 ʙᴀᴄᴋ", callback_data="settings_back")]
             ]),
