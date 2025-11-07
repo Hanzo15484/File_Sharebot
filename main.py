@@ -6,7 +6,7 @@ from dotenv import load_dotenv
 # Import handlers from all modules
 from start import start_handler, button_handler as start_button_handler
 from help import help_handler, button_handler as help_button_handler
-from links import genlink_handler, start_link_handler, link_button_handler
+from links import genlink_handler, start_link_handler, link_button_handler, genlink_next_message
 from settings import settings_handler, settings_button_handler, settings_message_handler
 from batch_link import batchlink_handler, batch_message_handler, batch_button_handler
 from force_sub import force_sub_handler, force_sub_button_handler, forwarded_channel_handler, check_force_subscription
@@ -137,7 +137,10 @@ def main():
     application.add_handler(CallbackQueryHandler(broadcast_button_handler, pattern="^broadcast_"))
     # Links module callbacks
     application.add_handler(CallbackQueryHandler(link_button_handler, pattern="^link_"))
-    
+    application.add_handler(
+    MessageHandler(~filters.COMMAND, genlink_next_message),
+    group=3
+    )
     # Settings module callbacks - multiple patterns
     application.add_handler(CallbackQueryHandler(settings_button_handler, pattern="^settings_"))
     application.add_handler(CallbackQueryHandler(settings_button_handler, pattern="^auto_delete_"))
