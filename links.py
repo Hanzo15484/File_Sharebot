@@ -66,10 +66,10 @@ async def genlink_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     # Send initial message
     sent = await update.message.reply_text(
-        "f"> ᴘʟᴇᴀsᴇ sᴇɴᴅ ᴏʀ ғᴏʀᴡᴀʀᴅ ᴀ ᴍᴇssᴀɢᴇ ᴛᴏ ɢᴇɴᴇʀᴀᴛᴇ ᴀ ʟɪɴᴋ\\.\n"
+         f"> ᴘʟᴇᴀsᴇ sᴇɴᴅ ᴏʀ ғᴏʀᴡᴀʀᴅ ᴀ ᴍᴇssᴀɢᴇ ᴛᴏ ɢᴇɴᴇʀᴀᴛᴇ ᴀ ʟɪɴᴋ\\.\n"
          f"ᴛɪᴍᴇᴏᴜᴛ\\: {seconds}s ʀᴇᴍᴀɪɴɪɴɢ",
         parse_mode="Markdown"
-    )
+     )
 
     # Save message for editing
     context.user_data["genlink_wait_msg"] = sent
