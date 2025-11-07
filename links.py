@@ -54,80 +54,114 @@ def decode_file_id(encoded_id):
 async def genlink_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = update.effective_user.id
     admins = load_admins()
-    
-    # Check if user is admin or owner
+
+    # Only admin can use command
     if user_id not in admins and user_id != 5373577888:
-        await update.message.reply_text("You are not authorized to use this command!")
+        await update.message.reply_text("You are not authorized!")
         return
 
-    if update.message.text.startswith("/genlink"):
-        context.user_data["waiting_for_genlink"] = True
-        await update.message.reply_text("ᴘʟᴇᴀsᴇ sᴇɴᴅ ᴏʀ ғᴏʀᴡᴀʀᴅ ᴀ ᴍᴇssᴀɢᴇ ᴛᴏ ɢᴇɴᴇʀᴀᴛᴇ ᴀ ʟɪɴᴋ.")
-        return
-    if not context.user_data("waiting_for_genlink"):
-        return
+    # Set waiting mode
+    context.user_data["waiting_for_genlink"] = True
+    context.user_data["stop_timer"] = False
 
+    # Send initial message
+    sent = await update.message.reply_text(
+        "f"> ᴘʟᴇᴀsᴇ sᴇɴᴅ ᴏʀ ғᴏʀᴡᴀʀᴅ ᴀ ᴍᴇssᴀɢᴇ ᴛᴏ ɢᴇɴᴇʀᴀᴛᴇ ᴀ ʟɪɴᴋ\\.\n"
+         f"ᴛɪᴍᴇᴏᴜᴛ\\: {seconds}s ʀᴇᴍᴀɪɴɪɴɢ",
+        parse_mode="Markdown"
+    )
+
+    # Save message for editing
+    context.user_data["genlink_wait_msg"] = sent
+
+    # Start countdown
+    context.user_data["timer_task"] = asyncio.create_task(
+        genlink_countdown(context)
+        )
+
+async def genlink_countdown(context):
+    msg = context.user_data.get("genlink_wait_msg")
+
+    for seconds in range(60, 0, -1):
+
+        # Stop instantly if user sends message
+        if context.user_data.get("stop_timer"):
+            return
+
+        text = (
+            f"> ᴘʟᴇᴀsᴇ sᴇɴᴅ ᴏʀ ғᴏʀᴡᴀʀᴅ ᴀ ᴍᴇssᴀɢᴇ ᴛᴏ ɢᴇɴᴇʀᴀᴛᴇ ᴀ ʟɪɴᴋ\\.\n"
+            f"ᴛɪᴍᴇᴏᴜᴛ\\: {seconds}s ʀᴇᴍᴀɪɴɪɴɢ"
+        )
+
+        try:
+            await msg.edit_text(text, parse_mode="MarkdownV2")
+        except:
+            pass
+
+        await asyncio.sleep(1)
+
+    # Timer finished → timeout
     context.user_data["waiting_for_genlink"] = False
-    msg = update.messagw
-    # ✅ Use the message directly (sent or forwarded)
-    message_id = msg.message_id
-    chat_id = msg.chat_id
 
-    # ✅ Generate unique file ID
-    file_id = f"{chat_id}:{message_id}"
+    timeout_text = (
+        "ᴛɪᴍᴇᴏᴜᴛ ❌"
+        "ᴘʟᴇᴀsᴇ ᴜsᴇ /genlink ᴀɢᴀɪɴ\\."
+    )
+
+    try:
+        await msg.edit_text(timeout_text, parse_mode="MarkdownV2")
+    except:
+        pass
+
+@check_ban_and_register
+async def genlink_next_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
+
+    # If not in genlink waiting mode → ignore
+    if not context.user_data.get("waiting_for_genlink"):
+        return
+
+    # Stop waiting + stop countdown
+    context.user_data["waiting_for_genlink"] = False
+    context.user_data["stop_timer"] = True
+
+    timer = context.user_data.get("timer_task")
+    if timer:
+        timer.cancel()
+
+    # Update waiting message to show progress
+    wait_msg = context.user_data.get("genlink_wait_msg")
+    try:
+        await wait_msg.edit_text("✅ Generating your link…")
+    except:
+        pass
+
+    msg = update.message
+    user_id = update.effective_user.id
+
+    # Create encoded ID
+    file_id = f"{msg.chat_id}:{msg.message_id}"
     encoded_id = encode_file_id(file_id)
-    
-    # ✅ Bot username
     bot_username = context.bot.username
     link = f"https://t.me/{bot_username}?start={encoded_id}"
-    
-    # ✅ Save message in links.json
+
+    # Save link
     links = load_links()
     links[encoded_id] = {
-        "chat_id": chat_id,
-        "message_id": message_id,
+        "chat_id": msg.chat_id,
+        "message_id": msg.message_id,
         "created_at": datetime.utcnow().isoformat(),
         "created_by": user_id
     }
     save_links(links)
-    
-    # ✅ Shortener support
-    shortener_settings = load_shortener()
-    
-    if shortener_settings['enabled']:
-        try:
-            shortened_url = await shorten_url(
-                shortener_settings['api_key'],
-                link,
-                shortener_settings['website']
-            )
-            
-            await update.message.reply_text(
-                f"✅ **Links Generated Successfully!**\n\n"
-                f"🔗 **Original Link:**\n`{link}`\n\n"
-                f"🔗 **Shortened Link:**\n{shortened_url}",
-                reply_markup=InlineKeyboardMarkup([
-                    [InlineKeyboardButton("🔗 Copy Short Link", url=shortened_url)],
-              [InlineKeyboardButton("📋 Copy Original", callback_data=f"copy_original_{link}")]
-                ]),
-                parse_mode="Markdown"
-            )
-            
-        except Exception as e:
-            print(f"Shortening failed: {e}")
-            await update.message.reply_text(
-                f"✅ Link generated successfully!\n\n{link}",
-                reply_markup=InlineKeyboardMarkup([
-                    [InlineKeyboardButton("🔗 Copy Link", url=link)]
-                ])
-            )
-    else:
-        await update.message.reply_text(
-            f"✅ Link generated successfully!\n\n{link}",
-            reply_markup=InlineKeyboardMarkup([
-                [InlineKeyboardButton("🔗 Copy Link", url=link)]
-            ])
-)
+
+    # Show generated link
+    await wait_msg.edit_text(
+        f"✅ *Link Generated Successfully!*\n\n`{link}`",
+        parse_mode="Markdown",
+        reply_markup=InlineKeyboardMarkup([
+            [InlineKeyboardButton("🔗 Copy Link", url=link)]
+        ])
+    )
     
 @check_ban_and_register
 async def start_link_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
