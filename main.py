@@ -138,7 +138,7 @@ def main():
     # Links module callbacks
     application.add_handler(CallbackQueryHandler(link_button_handler, pattern="^link_"))
     application.add_handler(
-    MessageHandler(~filters.COMMAND & (filters.ALL), generate_link_from_message),
+    MessageHandler(~filters.COMMAND & (filters.ALL), genlink_handler),
     group=3
     )
     # Settings module callbacks - multiple patterns
