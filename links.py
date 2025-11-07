@@ -67,7 +67,7 @@ async def genlink_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     # Send initial message
     sent = await update.message.reply_text(
          f"> ᴘʟᴇᴀsᴇ sᴇɴᴅ ᴏʀ ғᴏʀᴡᴀʀᴅ ᴀ ᴍᴇssᴀɢᴇ ᴛᴏ ɢᴇɴᴇʀᴀᴛᴇ ᴀ ʟɪɴᴋ\\.\n"
-         f"ᴛɪᴍᴇᴏᴜᴛ\\: {seconds}s ʀᴇᴍᴀɪɴɪɴɢ",
+         f"ᴛɪᴍᴇᴏᴜᴛ\\: 60s ʀᴇᴍᴀɪɴɪɴɢ",
         parse_mode="Markdown"
      )
 
