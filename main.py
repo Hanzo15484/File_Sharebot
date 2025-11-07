@@ -137,10 +137,7 @@ def main():
     application.add_handler(CallbackQueryHandler(broadcast_button_handler, pattern="^broadcast_"))
     # Links module callbacks
     application.add_handler(CallbackQueryHandler(link_button_handler, pattern="^link_"))
-    application.add_handler(
-    MessageHandler(~filters.COMMAND & (filters.ALL), genlink_handler),
-    group=3
-    )
+    
     # Settings module callbacks - multiple patterns
     application.add_handler(CallbackQueryHandler(settings_button_handler, pattern="^settings_"))
     application.add_handler(CallbackQueryHandler(settings_button_handler, pattern="^auto_delete_"))
