@@ -60,11 +60,15 @@ async def genlink_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text("You are not authorized to use this command!")
         return
 
-    msg = update.message
-    if not msg:
+    if update.message.text.startswith("/genlink"):
+        context.user_data["waiting_for_genlink"] = True
         await update.message.reply_text("ᴘʟᴇᴀsᴇ sᴇɴᴅ ᴏʀ ғᴏʀᴡᴀʀᴅ ᴀ ᴍᴇssᴀɢᴇ ᴛᴏ ɢᴇɴᴇʀᴀᴛᴇ ᴀ ʟɪɴᴋ.")
         return
-    
+    if not context.user_data("waiting_for_genlink"):
+        return
+
+    context.user_data["waiting_for_genlink"] = False
+    msg = update.messagw
     # ✅ Use the message directly (sent or forwarded)
     message_id = msg.message_id
     chat_id = msg.chat_id
@@ -104,7 +108,7 @@ async def genlink_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 f"🔗 **Shortened Link:**\n{shortened_url}",
                 reply_markup=InlineKeyboardMarkup([
                     [InlineKeyboardButton("🔗 Copy Short Link", url=shortened_url)],
-                    [InlineKeyboardButton("📋 Copy Original", callback_data=f"copy_original_{link}")]
+              [InlineKeyboardButton("📋 Copy Original", callback_data=f"copy_original_{link}")]
                 ]),
                 parse_mode="Markdown"
             )
