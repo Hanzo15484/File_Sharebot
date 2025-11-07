@@ -59,24 +59,25 @@ async def genlink_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if user_id not in admins and user_id != 5373577888:
         await update.message.reply_text("You are not authorized to use this command!")
         return
-    
-    if not update.message.reply_to_message:
-        await update.message.reply_text("Please reply to a message to generate a link.")
+
+    msg = update.message
+    if not msg:
+        await update.message.reply_text("ᴘʟᴇᴀsᴇ sᴇɴᴅ ᴏʀ ғᴏʀᴡᴀʀᴅ ᴀ ᴍᴇssᴀɢᴇ ᴛᴏ ɢᴇɴᴇʀᴀᴛᴇ ᴀ ʟɪɴᴋ.")
         return
     
-    replied_message = update.message.reply_to_message
-    message_id = replied_message.message_id
-    chat_id = update.effective_chat.id
-    
-    # Generate unique file ID (using chat_id + message_id)
+    # ✅ Use the message directly (sent or forwarded)
+    message_id = msg.message_id
+    chat_id = msg.chat_id
+
+    # ✅ Generate unique file ID
     file_id = f"{chat_id}:{message_id}"
     encoded_id = encode_file_id(file_id)
     
-    # Get bot username
+    # ✅ Bot username
     bot_username = context.bot.username
     link = f"https://t.me/{bot_username}?start={encoded_id}"
     
-    # Store message data in links.json
+    # ✅ Save message in links.json
     links = load_links()
     links[encoded_id] = {
         "chat_id": chat_id,
@@ -86,19 +87,17 @@ async def genlink_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     }
     save_links(links)
     
-    # Check if shortener is enabled and generate shortened link
+    # ✅ Shortener support
     shortener_settings = load_shortener()
     
     if shortener_settings['enabled']:
         try:
-            # Generate shortened version
             shortened_url = await shorten_url(
                 shortener_settings['api_key'],
                 link,
                 shortener_settings['website']
             )
             
-            # Send both links
             await update.message.reply_text(
                 f"✅ **Links Generated Successfully!**\n\n"
                 f"🔗 **Original Link:**\n`{link}`\n\n"
@@ -111,7 +110,6 @@ async def genlink_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
             )
             
         except Exception as e:
-            # If shortening fails, send original link only
             print(f"Shortening failed: {e}")
             await update.message.reply_text(
                 f"✅ Link generated successfully!\n\n{link}",
@@ -120,14 +118,12 @@ async def genlink_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 ])
             )
     else:
-        # Shortener not enabled, send original link only
         await update.message.reply_text(
             f"✅ Link generated successfully!\n\n{link}",
             reply_markup=InlineKeyboardMarkup([
                 [InlineKeyboardButton("🔗 Copy Link", url=link)]
             ])
-    )
-
+)
     
 @check_ban_and_register
 async def start_link_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
