@@ -324,7 +324,6 @@ async def shortlink_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     )
 
 #countdown shortener
-@check_ban_and_register
 async def shortlink_countdown(context):
     msg = context.user_data.get("shortlink_wait_msg")
 
