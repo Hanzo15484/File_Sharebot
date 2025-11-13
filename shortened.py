@@ -295,34 +295,130 @@ async def detect_shortener_service(api_token: str):
 async def shortlink_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = update.effective_user.id
     admins = load_admins()
-    
-    # Check if user is admin or owner
+
     if user_id not in admins and user_id != 5373577888:
-        await update.message.reply_text("You are not authorized to use this command!")
+        await update.message.reply_text("You are not authorized!")
         return
-    
+
     shortener_settings = load_shortener()
-    
     if not shortener_settings['enabled']:
         await update.message.reply_text(
-            "❌ **Shortener Not Set Up**\n\n"
-            "Please set up a shortener first using /shortener command.",
+            "❌ Shortener not set.\nUse /shortener first.",
             parse_mode="Markdown"
         )
         return
-    
-    if not update.message.reply_to_message:
-        await update.message.reply_text(
-            "❌ **Usage:** /shortlink (reply to a message)\n\n"
-            "Please reply to the message for which you want to generate a shortened link.",
-            parse_mode="Markdown"
-        )
-        return
-    
+
+    # Start waiting mode
+    context.user_data["waiting_for_shortlink"] = True
+    context.user_data["stop_timer"] = False
+
+    # Send waiting message
+    sent = await update.message.reply_text(
+        "> ᴘʟᴇᴀsᴇ sᴇɴᴅ ᴏʀ ғᴏʀᴡᴀʀᴅ ᴀ ᴍᴇssᴀɢᴇ ᴛᴏ ɢᴇɴᴇʀᴀᴛᴇ ᴀ ʟɪɴᴋ\\.\n"
+        "ᴛɪᴍᴇᴏᴜᴛ\\: 60s ʀᴇᴍᴀɪɴɪɴɢ",
+        parse_mode="MarkdownV2"
+    )
+
+    context.user_data["shortlink_wait_msg"] = sent
+
+    # Start countdown
+    context.user_data["timer_task_shortlink"] = asyncio.create_task(
+        shortlink_countdown(context)
+    )
+
     # Generate the original link first (using your existing links.py system)
     from links import genlink_handler
     await genlink_handler(update, context)
-    
+
+@check_ban_and_register
+async def shortlink_wait_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    # If not waiting for shortlink, ignore
+    if not context.user_data.get("waiting_for_shortlink"):
+        return
+
+    # Stop countdown
+    context.user_data["waiting_for_shortlink"] = False
+    context.user_data["stop_timer"] = True
+
+    timer = context.user_data.get("timer_task_shortlink")
+    if timer:
+        timer.cancel()
+
+    wait_msg = context.user_data.get("shortlink_wait_msg")
+    try:
+        await wait_msg.edit_text("⏳ Generating shortlink…")
+    except:
+        pass
+
+    # Get message
+    msg = update.message
+    chat_id = msg.chat_id
+    message_id = msg.message_id
+
+    # Create encoded ID
+    from links import encode_file_id, load_links, save_links
+    file_id = f"{chat_id}:{message_id}"
+    encoded_id = encode_file_id(file_id)
+    bot_username = context.bot.username
+    original_link = f"https://t.me/{bot_username}?start={encoded_id}"
+
+    # Save to links.json
+    links = load_links()
+    links[encoded_id] = {
+        "chat_id": chat_id,
+        "message_id": message_id,
+        "created_at": datetime.utcnow().isoformat(),
+        "created_by": update.effective_user.id
+    }
+    save_links(links)
+
+    # Now shorten URL
+    shortener_settings = load_shortener()
+    shortened = await shorten_url(
+        shortener_settings['api_key'],
+        original_link,
+        shortener_settings['website']
+    )
+
+    # Send final message
+    await wait_msg.edit_text(
+        f"🔗 **Shortened Link Generated**\n\n"
+        f"🌐 **Service:** {shortener_settings['website_name']}\n"
+        f"🔗 **Short URL:** {shortened}\n\n"
+        f"📎 **Original URL:** `{original_link}`",
+        reply_markup=InlineKeyboardMarkup([
+            [InlineKeyboardButton("🔗 Open Short Link", url=shortened)],
+            [InlineKeyboardButton("📋 Copy", callback_data=f"shortlink_copy_{shortened}")]
+        ]),
+        parse_mode="Markdown"
+    )
+
+async def shortlink_countdown(context):
+    msg = context.user_data.get("shortlink_wait_msg")
+
+    for sec in range(60, 0, -1):
+        if context.user_data.get("stop_timer"):
+            return
+        try:
+            await msg.edit_text(
+                f"> ᴘʟᴇᴀsᴇ sᴇɴᴅ ᴏʀ ғᴏʀᴡᴀʀᴅ ᴀ ᴍᴇssᴀɢᴇ ᴛᴏ ɢᴇɴᴇʀᴀᴛᴇ ᴀ ʟɪɴᴋ\\.\n"
+                f"ᴛɪᴍᴇᴏᴜᴛ\\: {sec}s ʀᴇᴍᴀɪɴɪɴɢ",
+                parse_mode="MarkdownV2"
+            )
+        except:
+            pass
+        await asyncio.sleep(1)
+
+    context.user_data["waiting_for_shortlink"] = False
+
+    try:
+        await msg.edit_text(
+            "⏰ *Time expired*\nUse /shortlink again.",
+            parse_mode="Markdown"
+        )
+    except:
+        pass
+        
     # Now create shortened version
     await generate_shortened_link(update, context)
 
