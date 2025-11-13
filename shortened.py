@@ -291,6 +291,7 @@ async def detect_shortener_service(api_token: str):
     # If no specific service detected, assume generic
     print("⚠️ No specific service detected, using generic")
     return "Custom Shortener", "https://example.com"
+
 #shortlink handler
 @check_ban_and_register
 async def shortlink_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -321,7 +322,8 @@ async def shortlink_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     context.user_data["sl_timer"] = asyncio.create_task(
         shortlink_countdown(context)
     )
-    
+
+#countdown shortener
 @check_ban_and_register
 async def shortlink_countdown(context):
     msg = context.user_data.get("shortlink_wait_msg")
@@ -349,7 +351,8 @@ async def shortlink_countdown(context):
         pass
 
     return
-    
+
+#main function   
 async def shortlink_wait_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if not context.user_data.get("waiting_for_shortlink"):
         return
@@ -403,50 +406,6 @@ async def shortlink_wait_handler(update: Update, context: ContextTypes.DEFAULT_T
             [InlineKeyboardButton("📋 Copy", callback_data=f"shortlink_copy_{shortened_url}")]
         ])
     )
-        
-    # Now create shortened version
-    await generate_shortened_link(update, context)
-
-async def generate_shortened_link(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """Generate shortened link using the configured shortener"""
-    shortener_settings = load_shortener()
-    api_key = shortener_settings['api_key']
-    website = shortener_settings['website']
-
-    replied_message = update.message.reply_to_message
-    message_id = replied_message.message_id
-    chat_id = update.effective_chat.id
-    # Get the original link (this would come from your links.py)
-    # For now, we'll create a placeholder - you'll need to integrate with your actual link generation
-    from links import encode_file_id
-    file_id = f"{chat_id}:{message_id}"
-    encoded_id = encode_file_id(file_id)
-
-    bot_username = context.bot.username
-    original_link = f"https://t.me/{bot_username}?start={encoded_id}"
-    
-    try:
-        shortened_url = await shorten_url(api_key, original_link, website)
-        
-        await update.message.reply_text(
-            f"🔗 **Shortened Link Generated**\n\n"
-            f"🌐 **Service:** {shortener_settings['website_name']}\n"
-            f"🔗 **Short URL:** {shortened_url}\n\n"
-            f"📎 **Original URL:** `{original_link}`",
-            reply_markup=InlineKeyboardMarkup([
-                [InlineKeyboardButton("🔗 Open Short Link", url=shortened_url)],
-                [InlineKeyboardButton("📋 Copy", callback_data=f"shortlink_copy_{shortened_url}")]
-            ]),
-            parse_mode="Markdown"
-        )
-        
-    except Exception as e:
-        await update.message.reply_text(
-            f"❌ **Shortening Failed**\n\n"
-            f"Error: {str(e)}\n\n"
-            f"Please check your API settings in /shortener",
-            parse_mode="Markdown"
-        )
 
 async def shorten_url(api_key: str, url: str, website: str) -> str:
     """Shorten URL using the configured shortener service"""
