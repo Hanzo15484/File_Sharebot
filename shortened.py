@@ -346,7 +346,7 @@ async def shortlink_countdown(context):
     context.user_data["waiting_for_shortlink"] = False
 
     try:
-        await msg.edit_text("⏰ *Time expired!*", parse_mode="Markdown")
+        await msg.edit_text("*ᴛɪᴍᴇᴏᴜᴛ ❌* ᴘʟᴇᴀsᴇ ᴜsᴇ /shortlink ᴀɢᴀɪɴ.", parse_mode="Markdown")
     except:
         pass
 
