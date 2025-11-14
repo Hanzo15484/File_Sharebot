@@ -47,7 +47,7 @@ async def batch_message_handler(update: Update, context: ContextTypes.DEFAULT_TY
         chat_id, message_id, channel_title = await extract_chat_message_info(update, context)
         
         if not chat_id or not message_id:
-            await update.message.reply_text("❌ Could not extract message information. Please forward a message from a channel or send a channel message link.")
+            print("❌ Could not extract message information. Please forward a message from a channel or send a channel message link.")
             return
         
         # Check if bot is admin in the channel
