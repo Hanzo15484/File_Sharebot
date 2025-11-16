@@ -10,36 +10,35 @@ from stats import BOT_START, format_uptime
 
 async def alive_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
-    # --- internal speed check ---
-    bot_start = time.time()
+    # --- TRUE internal ping (no Telegram involved) ---
+    t0 = time.perf_counter()
+    for _ in range(50000):
+        pass
+    internal_ping = int((time.perf_counter() - t0) * 1000)
 
-    waiting_msg = await update.message.reply_text(
-        "ᴘʀᴇᴘᴀʀɪɴɢ ᴀʟɪᴠᴇ ᴍᴇssᴀɢᴇ… 3"
-    )
-
-    internal_ping = int((time.time() - bot_start) * 1000)
-
-
-    # --- calculate status based on internal speed ---
+    # ping is always fast now:
     if internal_ping <= 50:
         status = "🟢 ꜰᴀsᴛ"
-    elif internal_ping <= 150:
+    elif internal_ping <= 100:
         status = "🟡 sʟᴏᴡ"
     else:
         status = "🔴 ᴅᴇʟᴀʏᴇᴅ"
 
+    # --- send instant countdown message ---
+    waiting_msg = await update.message.reply_text(
+        "ᴘʀᴇᴘᴀʀɪɴɢ ᴀʟɪᴠᴇ ᴍᴇssᴀɢᴇ… 3"
+    )
 
     # --- countdown animation ---
-    try:
-        await asyncio.sleep(1)
-        await waiting_msg.edit_text("ᴘʀᴇᴘᴀʀɪɴɢ ᴀʟɪᴠᴇ ᴍᴇssᴀɢᴇ… 2")
-        await asyncio.sleep(1)
-        await waiting_msg.edit_text("ᴘʀᴇᴘᴀʀɪɴɢ ᴀʟɪᴠᴇ ᴍᴇssᴀɢᴇ… 1")
-        await asyncio.sleep(1)
-    except:
-        pass
+    await asyncio.sleep(1)
+    await waiting_msg.edit_text("ᴘʀᴇᴘᴀʀɪɴɢ ᴀʟɪᴠᴇ ᴍᴇssᴀɢᴇ… 2")
 
-    # --- alive details ---
+    await asyncio.sleep(1)
+    await waiting_msg.edit_text("ᴘʀᴇᴘᴀʀɪɴɢ ᴀʟɪᴠᴇ ᴍᴇssᴀɢᴇ… 1")
+
+    await asyncio.sleep(1)
+
+    # --- prepare final alive caption ---
     settings = load_settings()
     alive_image = settings.get("alive_image", "")
 
@@ -52,7 +51,7 @@ async def alive_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         f"sᴛᴀᴛᴜs: {status}"
     )
 
-    # --- send image or fallback ---
+    # --- update into image + caption ---
     if alive_image and os.path.exists(alive_image):
         try:
             await waiting_msg.edit_media(
@@ -65,6 +64,7 @@ async def alive_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         except:
             pass
 
+    # fallback: text-only
     await waiting_msg.edit_text(caption)
 
 
