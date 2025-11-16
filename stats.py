@@ -147,7 +147,6 @@ async def get_best_cpu() -> Union[int,str]:
     2) try get_cpu_usage_from_dumpsys()
     3) return 'N/A'
     """
-    # top is fast; run in thread to avoid blocking
     top_val = await asyncio.to_thread(get_cpu_usage_from_top)
     if isinstance(top_val, int) and 0 <= top_val <= 100:
         return top_val
@@ -190,31 +189,96 @@ def samples_to_chart(samples: List[Union[int,str]]) -> Tuple[str,str]:
     return numeric_line, bar_line
 
 # -----------------------
-# Stress test (stronger, short)
+# Stress test (Option B: system-level processes)
 # -----------------------
-async def stress_test(duration: float = 3.0):
+async def stress_test_systemlevel(duration: float = 5.0, max_workers: int = None) -> Union[int,str]:
     """
-    Run a CPU-bound busy loop in a separate thread and sample CPU while it runs.
-    Returns peak observed CPU (best-effort).
+    Spawn multiple native 'yes' worker processes (one per core, capped) and optionally an openssl speed process.
+    Sample CPU while they run and then terminate them cleanly.
+    Returns peak observed CPU percent (best-effort).
     """
+    workers = max_workers or (os.cpu_count() or 4)
+    # cap to avoid overwhelming device (8 is reasonable for 8 cores)
+    workers = min(workers, 8)
+
+    procs = []
+    peak_samples = []
+
+    # helper to spawn 'yes' processes
+    def spawn_yes():
+        try:
+            p = subprocess.Popen(["yes"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+            return p
+        except Exception:
+            return None
+
+    # helper to spawn openssl if available (heavier)
+    def spawn_openssl():
+        try:
+            # openssl may not be present; this runs a continuous speed test until killed
+            p = subprocess.Popen(["openssl", "speed", "aes-256-cbc"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+            return p
+        except Exception:
+            return None
+
+    # Spawn yes workers
+    for _ in range(workers):
+        p = spawn_yes()
+        if p:
+            procs.append(p)
+
+    # Spawn openssl worker if available for extra load
+    openssl_proc = spawn_openssl()
+    if openssl_proc:
+        procs.append(openssl_proc)
+
+    # If no subprocess could be spawned, fallback to Python busy loop
+    used_fallback = False
+    if not procs:
+        used_fallback = True
+        # run a CPU-bound Python busy loop in thread
+        def busy_loop(end_ts):
+            x = 0
+            while time.time() < end_ts:
+                for _ in range(2000):
+                    x += (_ ^ (x << 1)) & 0xFFFFFFFF
+            return x
+        thread_task = asyncio.to_thread(busy_loop, time.time() + duration)
+
+    # Sample CPU while processes run
     end_ts = time.time() + duration
+    try:
+        while time.time() < end_ts:
+            v = await get_best_cpu()
+            peak_samples.append(v if isinstance(v, int) else 0)
+            await asyncio.sleep(0.25)
+    finally:
+        # Clean up any spawned processes
+        for p in procs:
+            try:
+                p.terminate()
+            except Exception:
+                pass
+        # give short grace period
+        await asyncio.sleep(0.4)
+        for p in procs:
+            try:
+                if p.poll() is None:
+                    p.kill()
+            except Exception:
+                pass
+        # ensure fallback thread completes
+        if used_fallback:
+            try:
+                await thread_task
+            except Exception:
+                pass
 
-    def busy(end_time):
-        x = 0
-        # heavy math to force CPU usage
-        while time.time() < end_time:
-            for _ in range(2000):
-                x += (_ ^ (x << 1)) & 0xFFFFFFFF
-        return x
-
-    task = asyncio.to_thread(busy, end_ts)
-    peaks = []
-    while time.time() < end_ts:
-        v = await get_best_cpu()
-        peaks.append(v if isinstance(v, int) else 0)
-        await asyncio.sleep(0.25)
-    await task
-    return max(peaks) if peaks else "N/A"
+    # derive peak
+    if peak_samples:
+        peak = max(peak_samples)
+        return peak
+    return "N/A"
 
 # -----------------------
 # RAM & process memory
@@ -404,11 +468,12 @@ async def stats_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     # edit - stress stage
     try:
-        await msg.edit_text("🔥 *Running short stress-test (3s)…*", parse_mode="Markdown")
+        await msg.edit_text("🔥 *Running system-level stress-test (5s)…*", parse_mode="Markdown")
     except Exception:
         pass
 
-    stress_peak = await stress_test(duration=3.0)
+    # run the new system-level stress-test (Option B)
+    stress_peak = await stress_test_systemlevel(duration=5.0, max_workers=None)
 
     # edit - network stage
     try:
@@ -421,7 +486,6 @@ async def stats_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     ul_task = asyncio.create_task(upload_speed_test())
 
     # Storage checks (fast)
-    # Termux internal path
     termux_path_candidates = [
         "/data/data/com.termux/files/usr",
         "/data/data/com.termux/files",
@@ -430,7 +494,6 @@ async def stats_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     termux_path = next((p for p in termux_path_candidates if os.path.exists(p)), termux_path_candidates[-1])
     termux_used, termux_total, termux_pct = await asyncio.to_thread(get_storage_info, termux_path)
 
-    # Phone storage (prefer sdcard/emulated)
     phone_candidates = ["/sdcard", "/storage/emulated/0", "/storage/self/primary", "/"]
     phone_path = next((p for p in phone_candidates if os.path.exists(p)), "/")
     phone_used, phone_total, phone_pct = await asyncio.to_thread(get_storage_info, phone_path)
@@ -463,7 +526,7 @@ async def stats_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         f"🌐 **Download Speed:** `{dl_speed} MB/s` `{dl_bytes}`\n"
         f"🌐 **Upload Speed:** `{ul_speed} MB/s` `{ul_bytes}`\n\n"
 
-        "_Tip:_ If CPU stays flat even during stress-test, your device may keep cores in deep idle or cap background workloads. Try opening another heavy app (like YouTube) or running a longer stress test."
+        "_Tip:_ If CPU stays flat even during stress-test, your device may keep cores in deep idle or cap background workloads. Running this system-level test uses native processes (yes/openssl) which should cause an observable spike. The test is short and cleaned up automatically."
     )
 
     try:
