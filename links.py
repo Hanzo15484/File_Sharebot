@@ -170,7 +170,7 @@ async def genlink_next_message(update: Update, context: ContextTypes.DEFAULT_TYP
 
         # Row 2 → Copy button
         [
-            InlineKeyboardButton("⎙ Copy", callback_data=f"copy_original_{link}")
+            InlineKeyboardButton("⎙ Copy", callback_data=f"copy_original_{encoded_id}")
         ]
     ])
 )
@@ -310,7 +310,9 @@ async def link_button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE
     
     # Add this new condition for copying original links
     elif data.startswith("copy_original_"):
-       original_link = data.replace("copy_original_", "")
+       encoded_id = data.replace("copy_original_", "")
+       bot_username = context.bot.username
+       original_link = f"https://t.me/{bot_username}?start={encoded_id}"
        await query.message.reply_text(f"Here is your link 🔗 \n`{original_link}`",
        parse_mode="MarkdownV2"
                                      )
