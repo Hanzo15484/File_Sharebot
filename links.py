@@ -241,7 +241,7 @@ async def process_link_after_force_sub(update: Update, context: ContextTypes.DEF
         
         # Store the forwarded message info for deletion
         auto_delete_time = settings.get("auto_delete_time", 10)
-        warning_msg = await update.message.reply_text(f"> *⚠️ ɪᴍᴘᴏʀᴛᴀɴᴛ\\:*\n\n> *ᴛʜɪs ғɪʟᴇ ᴡɪʟʟ ʙᴇ ᴅᴇʟᴇᴛᴇᴅ ɪɴ {auto_delete_time} ᴍɪɴᴜᴛᴇs\\. ᴘʟᴇᴀsᴇ sᴀᴠᴇ ᴏʀ ғᴏʀᴡᴀʀᴅ ɪᴛ ᴛᴏ ʏᴏᴜʀ sᴀᴠᴇᴅ ᴍᴇssᴀɢᴇs ʙᴇғᴏʀᴇ ɪᴛ ɢᴇᴛs ʀᴇᴍᴏᴠᴇᴅ\\.*",
+        warning_msg = await update.message.reply_text(f"> *⚠️ ɪᴍᴘᴏʀᴛᴀɴᴛ\\:*\n> *ᴛʜɪs ғɪʟᴇ ᴡɪʟʟ ʙᴇ ᴅᴇʟᴇᴛᴇᴅ ɪɴ {auto_delete_time} ᴍɪɴᴜᴛᴇs\\. ᴘʟᴇᴀsᴇ sᴀᴠᴇ ᴏʀ ғᴏʀᴡᴀʀᴅ ɪᴛ ᴛᴏ ʏᴏᴜʀ sᴀᴠᴇᴅ ᴍᴇssᴀɢᴇs ʙᴇғᴏʀᴇ ɪᴛ ɢᴇᴛs ʀᴇᴍᴏᴠᴇᴅ\\.*",
         parse_mode = "MarkdownV2")
         # Schedule deletion without sending warning message first
         asyncio.create_task(
