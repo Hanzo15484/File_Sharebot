@@ -4,7 +4,6 @@ from datetime import datetime
 from telegram import Update
 from telegram.ext import ContextTypes, CommandHandler
 
-# Reset every restart
 BOT_START = time.time()
 
 
@@ -32,35 +31,47 @@ def format_uptime(seconds: float) -> str:
 
 async def stats_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
-    # CPU
-    cpu_usage = psutil.cpu_percent(interval=0.4)
+    # ---- CPU ----
+    try:
+        cpu_usage = psutil.cpu_percent(interval=None)
+    except Exception:
+        cpu_usage = "N/A"
 
-    # RAM
-    ram = psutil.virtual_memory()
-    ram_used = ram.used // (1024 * 1024)
-    ram_total = ram.total // (1024 * 1024)
+    # ---- RAM ----
+    try:
+        ram = psutil.virtual_memory()
+        ram_used = ram.used // (1024 * 1024)
+        ram_total = ram.total // (1024 * 1024)
+    except Exception:
+        ram_used = ram_total = "N/A"
 
-    # Disk
-    disk = psutil.disk_usage('/')
-    disk_used = disk.used // (1024 * 1024)
-    disk_total = disk.total // (1024 * 1024)
+    # ---- Disk ----
+    try:
+        disk = psutil.disk_usage('/')
+        disk_used = disk.used // (1024 * 1024)
+        disk_total = disk.total // (1024 * 1024)
+    except Exception:
+        disk_used = disk_total = "N/A"
 
-    # Python process RAM
-    process = psutil.Process()
-    process_ram = process.memory_info().rss // (1024 * 1024)
+    # ---- Python process RAM ----
+    try:
+        process = psutil.Process()
+        process_ram = process.memory_info().rss // (1024 * 1024)
+    except Exception:
+        process_ram = "N/A"
 
     uptime = format_uptime(time.time() - BOT_START)
 
     text = (
-        "<b>📊 System Stats</b>\n\n"
-        f"💠 <b>CPU Usage:</b> {cpu_usage}%\n"
-        f"💠 <b>RAM:</b> {ram_used} MB / {ram_total} MB\n"
-        f"💠 <b>Disk:</b> {disk_used} MB / {disk_total} MB\n"
-        f"💠 <b>Bot RAM Usage:</b> {process_ram} MB\n"
-        f"💠 <b>Uptime:</b> {uptime}\n"
+        "*System Stats*\n\n"
+        f"💠 *CPU Usage:* {cpu_usage}%\n"
+        f"💠 *RAM:* {ram_used} MB / {ram_total} MB\n"
+        f"💠 *Disk:* {disk_used} MB / {disk_total} MB\n"
+        f"💠 *Bot RAM Usage:* {process_ram} MB\n"
+        f"💠 *Uptime:* {uptime}\n"
     )
 
-    await update.message.reply_text(text, parse_mode="HTML")
+    await update.message.reply_text(text, parse_mode="Markdown")
 
 
 stats_command = CommandHandler("stats", stats_handler)
