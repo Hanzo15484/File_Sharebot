@@ -313,12 +313,12 @@ async def link_button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE
       encoded_id = data.replace("copy_original_", "")
       bot_username = context.bot.username
       original_link = f"https://t.me/{bot_username}?start={encoded_id}"
-      await query.answer("Link copied to clipboard!", show_alert=False)
       await query.message.reply_text(
         f"🔗 **Your Link:**\n`{original_link}`",
         parse_mode="Markdown"
     )
-
+      await query.answer("sᴇɴᴅ sᴜᴄᴄᴇssғᴜʟʟʏ ✅", show_alert=False)
+    
 # Load admin data
 def load_admins():
     try:
