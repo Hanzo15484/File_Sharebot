@@ -48,8 +48,7 @@ async def alive_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         "*> ɪ'ᴍ ᴀʟɪᴠᴇ ʙᴀʙʏ!!*\n\n"
         f"*ᴜᴘᴛɪᴍᴇ:* {uptime}\n"
         f"*ʀᴇsᴘᴏɴsᴇ:* {internal_ping} ᴍs\n"
-        f"*sᴛᴀᴛᴜs:* {status}",
-        parse_mode = "Markdown"
+        f"*sᴛᴀᴛᴜs:* {status}"
     )
 
     # --- update into image + caption ---
@@ -58,7 +57,8 @@ async def alive_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
             await waiting_msg.edit_media(
                 InputMediaPhoto(
                     media=open(alive_image, "rb"),
-                    caption=caption
+                    caption=caption,
+                    parse_mode="Markdown"
                 )
             )
             return
@@ -66,7 +66,8 @@ async def alive_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
             pass
 
     # fallback: text-only
-    await waiting_msg.edit_text(caption)
+    await waiting_msg.edit_text(caption,
+    parse_mode="Markdown")
 
 
 alive_command = CommandHandler("alive", alive_handler)
