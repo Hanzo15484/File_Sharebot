@@ -29,7 +29,7 @@ async def alive_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     # send quick placeholder
     waiting_msg = await update.message.reply_text(
-        "ᴄʜᴇᴄᴋɪɴɢ ʙᴏᴛ ɪs ᴀʟɪᴠᴇ ᴏʀ ɴᴏᴛ?...",
+        "ᴄʜᴇᴄᴋɪɴɢ ʙᴏᴛ ɪs ᴀʟɪᴠᴇ ᴏʀ ɴᴏᴛ?\\.\\.\\.",
         parse_mode="MarkdownV2"
     )
 
