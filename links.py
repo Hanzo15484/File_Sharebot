@@ -313,12 +313,12 @@ async def link_button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE
       encoded_id = data.replace("copy_original_", "")
       bot_username = context.bot.username
       original_link = f"https://t.me/{bot_username}?start={encoded_id}"
+      await query.answer("sᴇɴᴅ sᴜᴄᴄᴇssғᴜʟʟʏ ✅", show_alert=False)
+      await asyncio.sleep(0.07)
       await query.message.reply_text(
-        f"🔗 **Your Link:**\n`{original_link}`",
+        f"🔗 ** Herre is Your Link:**\n`{original_link}`",
         parse_mode="Markdown"
     )
-      await asyncio.sleep(0.3)
-      await query.answer("sᴇɴᴅ sᴜᴄᴄᴇssғᴜʟʟʏ ✅", show_alert=False)
     
 # Load admin data
 def load_admins():
