@@ -141,6 +141,7 @@ def main():
     MessageHandler(~filters.COMMAND, genlink_next_message),
     group=3
     )
+    application.add_handler(CallbackQueryHandler(link_button_handler, pattern="^copy_original_"))
     # Settings module callbacks - multiple patterns
     application.add_handler(CallbackQueryHandler(settings_button_handler, pattern="^settings_"))
     application.add_handler(CallbackQueryHandler(settings_button_handler, pattern="^auto_delete_"))
