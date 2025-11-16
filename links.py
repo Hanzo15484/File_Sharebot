@@ -310,6 +310,7 @@ async def link_button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE
     
     # Add this new condition for copying original links
     elif data.startswith("copy_original_"):
+      await query.answer()
       encoded_id = data.replace("copy_original_", "")
       bot_username = context.bot.username
       original_link = f"https://t.me/{bot_username}?start={encoded_id}"
