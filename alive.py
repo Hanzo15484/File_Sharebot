@@ -45,10 +45,10 @@ async def alive_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     uptime = format_uptime(time.time() - BOT_START)
 
     caption = (
-        "> *ɪ'ᴍ ᴀʟɪᴠᴇ ʙᴀʙʏ!!*\n\n"
-        f"*ᴜᴘᴛɪᴍᴇ:* {uptime}\n"
-        f"*ʀᴇsᴘᴏɴsᴇ:* {internal_ping} ᴍs\n"
-        f"*sᴛᴀᴛᴜs:* {status}"
+    "> ɪ'ᴍ ᴀʟɪᴠᴇ ʙᴀʙʏ\!\!\n\n"
+    f"ᴜᴘᴛɪᴍᴇ\: {uptime.replace(',', '\\,')}\n"
+    f"ʀᴇsᴘᴏɴsᴇ\: {internal_ping} ᴍs\n"
+    f"sᴛᴀᴛᴜs\: {status}"
     )
 
     # --- update into image + caption ---
@@ -67,7 +67,7 @@ async def alive_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     # fallback: text-only
     await waiting_msg.edit_text(caption,
-    parse_mode="Markdown")
+    parse_mode="MarkdownV2")
 
 
 alive_command = CommandHandler("alive", alive_handler)
