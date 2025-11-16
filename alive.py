@@ -10,50 +10,79 @@ from stats import BOT_START, format_uptime
 
 async def alive_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
-    # --- TRUE internal ping (no Telegram involved) ---
+    # ---- start preparing instantly ----
+    prep_start = time.time()
+
+    # internal ping
     t0 = time.perf_counter()
     for _ in range(50000):
         pass
     internal_ping = int((time.perf_counter() - t0) * 1000)
 
-    # ping is always fast now:
-    if internal_ping <= 50:
+    # status light
+    if internal_ping <= 20:
         status = "🟢 ꜰᴀsᴛ"
-    elif internal_ping <= 100:
+    elif internal_ping <= 60:
         status = "🟡 sʟᴏᴡ"
     else:
         status = "🔴 ᴅᴇʟᴀʏᴇᴅ"
 
-    # --- send instant countdown message ---
+    # send quick placeholder
     waiting_msg = await update.message.reply_text(
-        "ᴘʀᴇᴘᴀʀɪɴɢ ᴀʟɪᴠᴇ ᴍᴇssᴀɢᴇ… 3"
+        "ᴄʜᴇᴄᴋɪɴɢ ʙᴏᴛ ɪs ᴀʟɪᴠᴇ ᴏʀ ɴᴏᴛ?...",
+        parse_mode="MarkdownV2"
     )
 
-    # --- countdown animation ---
-    await asyncio.sleep(1)
-    await waiting_msg.edit_text("ᴘʀᴇᴘᴀʀɪɴɢ ᴀʟɪᴠᴇ ᴍᴇssᴀɢᴇ… 2")
-
-    await asyncio.sleep(1)
-    await waiting_msg.edit_text("ᴘʀᴇᴘᴀʀɪɴɢ ᴀʟɪᴠᴇ ᴍᴇssᴀɢᴇ… 1")
-
-    await asyncio.sleep(1)
-
-    # --- prepare final alive caption ---
+    # prepare uptime + caption
     settings = load_settings()
     alive_image = settings.get("alive_image", "")
-
     uptime = format_uptime(time.time() - BOT_START)
 
+    # escape commas for MarkdownV2
+    uptime_md = uptime.replace(",", "\\,")
+
     caption = (
-    "> ɪ'ᴍ ᴀʟɪᴠᴇ ʙᴀʙʏ\!\!\n"
-    f"ᴜᴘᴛɪᴍᴇ\: {uptime.replace(',', '\\,')}\n"
-    f"ʀᴇsᴘᴏɴsᴇ\: {internal_ping} ᴍs\n"
-    f"sᴛᴀᴛᴜs\: {status}"
+        "> ɪ'ᴍ ᴀʟɪᴠᴇ ʙᴀʙʏ\\!\\!\n\n"
+        f"ᴜᴘᴛɪᴍᴇ\\: {uptime_md}\n"
+        f"ʀᴇsᴘᴏɴsᴇ\\: {internal_ping} ᴍs\n"
+        f"sᴛᴀᴛᴜs\\: {status}"
     )
 
-    # --- update into image + caption ---
-    if alive_image and os.path.exists(alive_image):
+    # ---- preparation finished ----
+    prep_time = time.time() - prep_start
+
+    # 👉 if preparation was FAST → edit immediately
+    if prep_time < 1.2:
         try:
+            if alive_image and os.path.exists(alive_image):
+                await waiting_msg.edit_media(
+                    InputMediaPhoto(
+                        media=open(alive_image, "rb"),
+                        caption=caption,
+                        parse_mode="MarkdownV2"
+                    )
+                )
+                return
+        except:
+            pass
+        
+        await waiting_msg.edit_text(caption, parse_mode="MarkdownV2")
+        return
+
+    # 👉 if preparation was SLOW → show countdown
+    try:
+        await waiting_msg.edit_text("ᴄʜᴇᴄᴋɪɴɢ ʙᴏᴛ ɪs ᴀʟɪᴠᴇ ᴏʀ ɴᴏᴛ?... 3", parse_mode="MarkdownV2")
+        await asyncio.sleep(1)
+        await waiting_msg.edit_text("ᴄʜᴇᴄᴋɪɴɢ ʙᴏᴛ ɪs ᴀʟɪᴠᴇ ᴏʀ ɴᴏᴛ?... 2", parse_mode="MarkdownV2")
+        await asyncio.sleep(1)
+        await waiting_msg.edit_text("ᴄʜᴇᴄᴋɪɴɢ ʙᴏᴛ ɪs ᴀʟɪᴠᴇ ᴏʀ ɴᴏᴛ?... 1", parse_mode="MarkdownV2")
+        await asyncio.sleep(1)
+    except:
+        pass
+
+    # final output
+    try:
+        if alive_image and os.path.exists(alive_image):
             await waiting_msg.edit_media(
                 InputMediaPhoto(
                     media=open(alive_image, "rb"),
@@ -62,12 +91,10 @@ async def alive_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 )
             )
             return
-        except:
-            pass
+    except:
+        pass
 
-    # fallback: text-only
-    await waiting_msg.edit_text(caption,
-    parse_mode="MarkdownV2")
+    await waiting_msg.edit_text(caption, parse_mode="MarkdownV2")
 
 
 alive_command = CommandHandler("alive", alive_handler)
