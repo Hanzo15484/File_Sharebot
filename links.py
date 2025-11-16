@@ -305,8 +305,17 @@ async def link_button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE
     data = query.data
     
     if data == "link_close":
+        await query.answer("❌ ᴄʟᴏsᴇᴅ", show_alert=False)
+        await asyncio.sleep(0.07)
         await query.message.delete()
-    
+     try:
+        user_msg = query.message.reply_to_message
+        if user_msg:
+            await asyncio.sleep(0.4)
+            await user_msg.delete()
+    except Exception as e:
+        print(f"Error in deleting user's command: {e}")
+        
     # Add this new condition for copying original links
     elif data.startswith("copy_original_"):
       encoded_id = data.replace("copy_original_", "")
@@ -315,7 +324,7 @@ async def link_button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE
       await query.answer("sᴇɴᴅ sᴜᴄᴄᴇssғᴜʟʟʏ ✅", show_alert=False)
       await asyncio.sleep(0.07)
       await query.message.reply_text(
-        f"🔗 ** Herre is Your Link:**\n`{original_link}`",
+        f"🔗 ** ʜᴇʀᴇ ɪs ʏᴏᴜʀ ʟɪɴᴋ:**\n`{original_link}`",
         parse_mode="Markdown"
     )
     
