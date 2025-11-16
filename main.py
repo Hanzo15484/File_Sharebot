@@ -17,6 +17,9 @@ from admins import admins_handler, admins_button_handler
 from restart import restart_bot
 from update import update_bot
 from shortened import shortener_handler, shortlink_handler, shortener_button_handler, shortener_api_handler, shortlink_button_handler, shortlink_wait_handler 
+from ping import ping_command
+from stats import stats_command
+from alive import alive_command
 # Set up logging
 logging.basicConfig(
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
@@ -120,6 +123,9 @@ def main():
     # Callback query handlers with specific patterns
     print("🔘 Adding callback query handlers...")
 
+    application.add_handler(ping_command)
+    application.add_handler(stats_command)
+    application.add_handler(alive_command)
     # Start module callbacks
     application.add_handler(CallbackQueryHandler(start_button_handler, pattern="^start_"))
 
