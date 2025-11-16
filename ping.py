@@ -36,7 +36,7 @@ async def ping_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     start = time.time()
 
     # Initial message
-    msg = await update.message.reply_text("🏓 *ᴘɪɴɢɪɴɢ...*", parse_mode="Markdown")
+    msg = await update.message.reply_text("*ᴘɪɴɢɪɴɢ...*", parse_mode="Markdown")
 
     await asyncio.sleep(0.3)
 
@@ -48,12 +48,12 @@ async def ping_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     uptime_text = format_uptime(uptime_sec)
 
     text = (
-        f"🏓**Pong!**\n"
-        f"**Ping:** `{ping_ms:.2f} ms`\n"
-        f"**Response Time:** `{response_sec:.2f} s`\n"
-        f"**Received Message In:** `{response_sec:.2f} s`\n"
-        f"**Uptime:** `{uptime_text}`\n\n"
-        f"**Pinged by:** <a href=\"tg://user?id={user.id}\">{user.full_name}</a>"
+        f"🏓<b>Pong!</b>\n"
+        f"<b>Ping:</b> {ping_ms:.2f} ms\n"
+        f"<b>Response Time:</b> {response_sec:.2f} s\n"
+        f"<b>Received Message In:</b> {response_sec:.2f} s\n"
+        f"<b>Uptime:</b> {uptime_text}\n\n"
+        f"<b>Pinged by:</b> <a href=\"tg://user?id={user.id}\">{user.full_name}</a>"
     )
 
     await msg.edit_text(text, parse_mode="HTML")
