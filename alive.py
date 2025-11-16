@@ -71,11 +71,11 @@ async def alive_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     # 👉 if preparation was SLOW → show countdown
     try:
-        await waiting_msg.edit_text("ᴄʜᴇᴄᴋɪɴɢ ʙᴏᴛ ɪs ᴀʟɪᴠᴇ ᴏʀ ɴᴏᴛ?... 3", parse_mode="MarkdownV2")
+        await waiting_msg.edit_text("ᴄʜᴇᴄᴋɪɴɢ ʙᴏᴛ ɪs ᴀʟɪᴠᴇ ᴏʀ ɴᴏᴛ?\\.\\.\\. 3", parse_mode="MarkdownV2")
         await asyncio.sleep(1)
-        await waiting_msg.edit_text("ᴄʜᴇᴄᴋɪɴɢ ʙᴏᴛ ɪs ᴀʟɪᴠᴇ ᴏʀ ɴᴏᴛ?... 2", parse_mode="MarkdownV2")
+        await waiting_msg.edit_text("ᴄʜᴇᴄᴋɪɴɢ ʙᴏᴛ ɪs ᴀʟɪᴠᴇ ᴏʀ ɴᴏᴛ?\\.\\.\\. 2", parse_mode="MarkdownV2")
         await asyncio.sleep(1)
-        await waiting_msg.edit_text("ᴄʜᴇᴄᴋɪɴɢ ʙᴏᴛ ɪs ᴀʟɪᴠᴇ ᴏʀ ɴᴏᴛ?... 1", parse_mode="MarkdownV2")
+        await waiting_msg.edit_text("ᴄʜᴇᴄᴋɪɴɢ ʙᴏᴛ ɪs ᴀʟɪᴠᴇ ᴏʀ ɴᴏᴛ?\\.\\.\\. 1", parse_mode="MarkdownV2")
         await asyncio.sleep(1)
     except:
         pass
