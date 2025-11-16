@@ -317,6 +317,7 @@ async def link_button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE
         f"🔗 **Your Link:**\n`{original_link}`",
         parse_mode="Markdown"
     )
+      await asyncio.sleep(0.3)
       await query.answer("sᴇɴᴅ sᴜᴄᴄᴇssғᴜʟʟʏ ✅", show_alert=False)
     
 # Load admin data
