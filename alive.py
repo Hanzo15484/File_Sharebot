@@ -1,36 +1,36 @@
+# alive.py
+
 import os
 import time
 from telegram import Update
 from telegram.ext import ContextTypes, CommandHandler
-from ping import format_uptime, BOT_START_TIME
 
-ALIVE_IMAGE_PATH = ""
+from settings import load_settings
+from stats import BOT_START, format_uptime  # You already have uptime formatter
 
 async def alive_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
-    uptime_seconds = time.time() - BOT_START_TIME
-    uptime = format_uptime(uptime_seconds)
+    settings = load_settings()
+    alive_image = settings.get("alive_image", "")
 
-    # Direct smallcaps text (no function used)
+    # Uptime
+    uptime_seconds = time.time() - BOT_START
+    uptime_text = format_uptime(uptime_seconds)
+
     caption = (
         "ɪ'ᴍ ᴀʟɪᴠᴇ ʙᴀʙʏ!!\n\n"
-        f"ᴜᴘᴛɪᴍᴇ - {uptime}"
+        f"ᴜᴘᴛɪᴍᴇ: {uptime_text}"
     )
 
-    # If image missing -> send text only
-    if not ALIVE_IMAGE_PATH or not os.path.exists(ALIVE_IMAGE_PATH):
-        await update.message.reply_text(caption, parse_mode="HTML")
+    # If alive image exists
+    if alive_image and os.path.exists(alive_image):
+        await update.message.reply_photo(
+            photo=open(alive_image, "rb"),
+            caption=caption
+        )
         return
 
-    # If image exists -> send image + caption
-    try:
-        await update.message.reply_photo(
-            photo=open(ALIVE_IMAGE_PATH, "rb"),
-            caption=caption,
-            parse_mode="HTML"
-        )
-    except:
-        await update.message.reply_text(caption, parse_mode="HTML")
-
+    # Fallback no image
+    await update.message.reply_text(caption)
 
 alive_command = CommandHandler("alive", alive_handler)
