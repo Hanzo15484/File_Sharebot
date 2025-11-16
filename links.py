@@ -158,7 +158,7 @@ async def genlink_next_message(update: Update, context: ContextTypes.DEFAULT_TYP
     share_url = f"https://telegram.me/share/url?url={link}"
 
     await wait_msg.edit_text(
-     f"*✅ ʟɪɴᴋ ɢᴇɴᴇʀᴀᴛᴇᴅ sᴜᴄᴄᴇssғᴜʟʟʏ!*\n{link}",
+     f"*✅ ʟɪɴᴋ ɢᴇɴᴇʀᴀᴛᴇᴅ sᴜᴄᴄᴇssғᴜʟʟʏ!*\n`{link}`",
      parse_mode="Markdown",
      reply_markup=InlineKeyboardMarkup([
 
