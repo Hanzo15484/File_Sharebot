@@ -45,7 +45,7 @@ async def alive_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     uptime = format_uptime(time.time() - BOT_START)
 
     caption = (
-    "> ɪ'ᴍ ᴀʟɪᴠᴇ ʙᴀʙʏ\!\!\n\n"
+    "> ɪ'ᴍ ᴀʟɪᴠᴇ ʙᴀʙʏ\!\!\n"
     f"ᴜᴘᴛɪᴍᴇ\: {uptime.replace(',', '\\,')}\n"
     f"ʀᴇsᴘᴏɴsᴇ\: {internal_ping} ᴍs\n"
     f"sᴛᴀᴛᴜs\: {status}"
