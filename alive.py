@@ -38,14 +38,11 @@ async def alive_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     alive_image = settings.get("alive_image", "")
     uptime = format_uptime(time.time() - BOT_START)
 
-    # escape commas for MarkdownV2
-    uptime_md = uptime.replace(",", "\\,")
-
     caption = (
-        "> ɪ'ᴍ ᴀʟɪᴠᴇ ʙᴀʙʏ\\!\\!\n\n"
-        f"ᴜᴘᴛɪᴍᴇ\\: {uptime_md}\n"
-        f"ʀᴇsᴘᴏɴsᴇ\\: {internal_ping} ᴍs\n"
-        f"sᴛᴀᴛᴜs\\: {status}"
+    "> ɪ'ᴍ ᴀʟɪᴠᴇ ʙᴀʙʏ\!\!\n\n"
+    f"ᴜᴘᴛɪᴍᴇ\: {uptime.replace(',', '\\,')}\n"
+    f"ʀᴇsᴘᴏɴsᴇ\: {internal_ping} ᴍs\n"
+    f"sᴛᴀᴛᴜs\: {status}"
     )
 
     # ---- preparation finished ----
