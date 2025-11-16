@@ -58,7 +58,7 @@ async def alive_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 InputMediaPhoto(
                     media=open(alive_image, "rb"),
                     caption=caption,
-                    parse_mode="Markdown"
+                    parse_mode="MarkdownV2"
                 )
             )
             return
