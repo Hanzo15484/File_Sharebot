@@ -301,32 +301,34 @@ async def delete_and_notify(context, chat_id, file_msg_id, warning_msg_id, delay
         
 async def link_button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
-    
     data = query.data
-    
+
     if data == "link_close":
         await query.answer("❌ ᴄʟᴏsᴇᴅ", show_alert=False)
         await asyncio.sleep(0.07)
         await query.message.delete()
-     try:
-        user_msg = query.message.reply_to_message
-        if user_msg:
-            await asyncio.sleep(0.4)
-            await user_msg.delete()
-    except Exception as e:
-        print(f"Error in deleting user's command: {e}")
-        
+
+        try:
+            user_msg = query.message.reply_to_message
+            if user_msg:
+                await asyncio.sleep(0.4)
+                await user_msg.delete()
+        except Exception as e:
+            print(f"Error in deleting user's command: {e}")
+
     # Add this new condition for copying original links
     elif data.startswith("copy_original_"):
-      encoded_id = data.replace("copy_original_", "")
-      bot_username = context.bot.username
-      original_link = f"https://t.me/{bot_username}?start={encoded_id}"
-      await query.answer("sᴇɴᴅ sᴜᴄᴄᴇssғᴜʟʟʏ ✅", show_alert=False)
-      await asyncio.sleep(0.07)
-      await query.message.reply_text(
-        f"🔗 ** ʜᴇʀᴇ ɪs ʏᴏᴜʀ ʟɪɴᴋ:**\n`{original_link}`",
-        parse_mode="Markdown"
-    )
+        encoded_id = data.replace("copy_original_", "")
+        bot_username = context.bot.username
+        original_link = f"https://t.me/{bot_username}?start={encoded_id}"
+
+        await query.answer("sᴇɴᴅ sᴜᴄᴄᴇssғᴜʟʟʏ ✅", show_alert=False)
+        await asyncio.sleep(0.07)
+
+        await query.message.reply_text(
+            f"🔗 **ʜᴇʀᴇ ɪs ʏᴏᴜʀ ʟɪɴᴋ:**\n`{original_link}`",
+            parse_mode="Markdown"
+        )
     
 # Load admin data
 def load_admins():
