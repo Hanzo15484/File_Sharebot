@@ -48,7 +48,7 @@ async def ping_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     uptime_text = format_uptime(uptime_sec)
 
     text = (
-        f"🏓<b>Pong!</b>\n"
+        f"🏓 <b>Pong!</b>\n\n"
         f"<b>Ping:</b> {ping_ms:.2f} ms\n"
         f"<b>Response Time:</b> {response_sec:.2f} s\n"
         f"<b>Received Message In:</b> {response_sec:.2f} s\n"
