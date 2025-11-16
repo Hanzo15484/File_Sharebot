@@ -155,13 +155,25 @@ async def genlink_next_message(update: Update, context: ContextTypes.DEFAULT_TYP
     save_links(links)
 
     # Show generated link
+    share_url = f"https://telegram.me/share/url?url={link}"
+
     await wait_msg.edit_text(
-        f"✅ *Link Generated Successfully!*\n\n`{link}`",
-        parse_mode="Markdown",
-        reply_markup=InlineKeyboardMarkup([
-            [InlineKeyboardButton("🔗 Copy Link", url=link)]
-        ])
-    )
+     f"🔗 *ʏᴏᴜʀ ᴜʀʟ*\n`{link}`",
+     parse_mode="Markdown",
+     reply_markup=InlineKeyboardMarkup([
+
+        # Row 1 → Your URL + Share URL
+        [
+            InlineKeyboardButton("🔗 ʏᴏᴜʀ ᴜʀʟ", url=link),
+            InlineKeyboardButton("🔁 sʜᴀʀᴇ ᴜʀʟ", url=share_url),
+        ],
+
+        # Row 2 → Copy button
+        [
+            InlineKeyboardButton("⎙ Copy", callback_data=f"copy_original_{link}")
+        ]
+    ])
+)
     
 @check_ban_and_register
 async def start_link_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -298,8 +310,12 @@ async def link_button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE
     
     # Add this new condition for copying original links
     elif data.startswith("copy_original_"):
-        original_link = data.replace("copy_original_", "")
-        await query.answer(f"Original link copied!", show_alert=False)
+       original_link = data.replace("copy_original_", "")
+       await query.message.reply_text(f"Here is your link 🔗 \n`{original_link}`",
+       parse_mode="MarkdownV2"
+                                     )
+       await query.answer
+
 # Load admin data
 def load_admins():
     try:
