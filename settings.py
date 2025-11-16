@@ -17,7 +17,8 @@ def load_settings():
             "help_text": "Available Commands:\\n\\n/start - Start the bot\\n/help - Show this help message\\n/genlink - Generate link\\n/batchlink - Generate batch links\\n/custombatch - Custom batch processing\\n/fsub - Force subscribe\\n/settings - Bot settings\\n/promote - Promote user to admin\\n/demote - Demote admin\\n/ban - Ban user\\n/unban - Unban user\\n/users - Show users\\n/admins - Show admins\\n/update - Update bot\\n/restart - Restart bot",
             "auto_delete_time": 10,
             "protect_content": False,
-            "settings_image": ""
+            "settings_image": "",
+            "alive_image": ""
         }
 
 # Save settings
@@ -124,6 +125,7 @@ async def settings_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         f"ᴘʀᴏᴛᴇᴄᴛ ᴄᴏɴᴛᴇɴᴛ: {'✅ ON' if protect_content else '❌ OFF'}\n\n"
         f"ғᴏʀᴄᴇ sᴜʙ ɪᴍᴀɢᴇ: {'✅ Set' if settings.get('force_sub_image') and os.path.exists(settings.get('force_sub_image')) else '❌ Not Set'}\n"
         f"sᴇᴛᴛɪɴɢs ɪᴍᴀɢᴇ: {'✅ Set' if settings.get('settings_image') and os.path.exists(settings.get('settings_image')) else '❌ Not Set'}\n"
+        f"ᴀʟɪᴠᴇ ɪᴍᴀɢᴇ: {'✅ Set' if settings.get('alive_image') and os.path.exists(settings.get('alive_image')) else '❌ Not Set'}\n"
         "sᴇʟᴇᴄᴛ ᴀɴ ᴏᴘᴛɪᴏɴ ᴛᴏ ᴄᴏɴғɪɢᴜʀᴇ:"
     )
 
@@ -144,8 +146,10 @@ async def settings_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
             InlineKeyboardButton("ғᴏʀᴄᴇ sᴜʙ ɪᴍᴀɢᴇ", callback_data="settings_force_sub_image"),
             InlineKeyboardButton("sᴇᴛᴛɪɴɢs ɪᴍᴀɢᴇ", callback_data="settings_settings_image"),
         ],
-        [InlineKeyboardButton("✖ ᴄʟᴏsᴇ", callback_data="settings_close")],
-    ]
+        [
+            InlineKeyboardButton("ᴀʟɪᴠᴇ ɪᴍᴀɢᴇ", callback_data="settings_alive_image"),
+            InlineKeyboardButton("✖ ᴄʟᴏsᴇ", callback_data="settings_close")
+        ]
 
     reply_markup = InlineKeyboardMarkup(keyboard)
 
@@ -244,6 +248,21 @@ async def settings_button_handler(update: Update, context: ContextTypes.DEFAULT_
             parse_mode="MarkdownV2"
         )
         context.user_data['waiting_for'] = 'settings_image'
+    # ALIVE IMAGE
+    elif data == "settings_alive_image":
+        await query.edit_message_caption(
+            "*ᴘʟᴇᴀsᴇ ᴡᴀɪᴛ\\.\\.\\.\\.*",
+            parse_mode="MarkdownV2"
+        )
+        await asyncio.sleep(0.3)
+        await query.edit_message_caption(
+            "✨ **Alive Image Settings**\n\nɴᴏᴡ sᴇɴᴅ ᴍᴇ ɪᴍᴀɢᴇ ᴛʜᴀᴛ ʏᴏᴜ ᴡᴀɴᴛ ᴛᴏ sᴇᴛ ғᴏʀ ᴀʟɪᴠᴇ ɪᴍᴀɢᴇ",
+            reply_markup=InlineKeyboardMarkup([
+                [InlineKeyboardButton("《 ʙᴀᴄᴋ", callback_data="settings_back")]
+            ]),
+            parse_mode="MarkdownV2"
+        )
+        context.user_data['waiting_for'] = 'alive_image'
 
     # FORCE SUBSCRIBE IMAGE
     elif data == "settings_force_sub_image":
@@ -410,6 +429,7 @@ async def settings_button_handler(update: Update, context: ContextTypes.DEFAULT_
             f"ᴘʀᴏᴛᴇᴄᴛ ᴄᴏɴᴛᴇɴᴛ: {'✅ ON' if protect_content else '❌ OFF'}\n\n"
             f"ғᴏʀᴄᴇ sᴜʙ ɪᴍᴀɢᴇ: {'✅ Set' if settings.get('force_sub_image') and os.path.exists(settings.get('force_sub_image')) else '❌ Not Set'}\n"
             f"sᴇᴛᴛɪɴɢs ɪᴍᴀɢᴇ: {'✅ Set' if settings.get('settings_image') and os.path.exists(settings.get('settings_image')) else '❌ Not Set'}\n"
+            f"ᴀʟɪᴠᴇ ɪᴍᴀɢᴇ: {'✅ Set' if settings.get('alive_image') and os.path.exists(settings.get('alive_image')) else '❌ Not Set'}\n"
             "sᴇʟᴇᴄᴛ ᴀɴ ᴏᴘᴛɪᴏɴ ᴛᴏ ᴄᴏɴғɪɢᴜʀᴇ:"
         )
 
@@ -430,9 +450,10 @@ async def settings_button_handler(update: Update, context: ContextTypes.DEFAULT_
                 InlineKeyboardButton("ғᴏʀᴄᴇ sᴜʙ ɪᴍᴀɢᴇ", callback_data="settings_force_sub_image"),
                 InlineKeyboardButton("sᴇᴛᴛɪɴɢs ɪᴍᴀɢᴇ", callback_data="settings_settings_image")
             ],
-            [InlineKeyboardButton("✖ ᴄʟᴏsᴇ", callback_data="settings_close")]
-        ]
-
+            [
+                InlineKeyboardButton("ᴀʟɪᴠᴇ ɪᴍᴀɢᴇ", callback_data="settings_alive_image"),
+                InlineKeyboardButton("✖ ᴄʟᴏsᴇ", callback_data="settings_close")
+            ]
         reply_markup = InlineKeyboardMarkup(keyboard)
 
         try:
@@ -467,7 +488,7 @@ async def settings_message_handler(update: Update, context: ContextTypes.DEFAULT
     
     settings = load_settings()
     
-    if waiting_for in ['start_image', 'help_image', 'settings_image']:
+    if waiting_for in ['start_image', 'help_image', 'settings_image', 'alive_image']:
         if update.message.photo:
             # Get the largest photo
             photo = update.message.photo[-1]
