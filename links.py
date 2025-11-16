@@ -131,7 +131,7 @@ async def genlink_next_message(update: Update, context: ContextTypes.DEFAULT_TYP
     # Update waiting message to show progress
     wait_msg = context.user_data.get("genlink_wait_msg")
     try:
-        await wait_msg.edit_text("✅ Generating your link…")
+        await wait_msg.edit_text("✅ ɢᴇɴᴇʀᴀᴛɪɴɢ ʏᴏᴜʀ ʟɪɴᴋ…")
     except:
         pass
 
@@ -158,17 +158,15 @@ async def genlink_next_message(update: Update, context: ContextTypes.DEFAULT_TYP
     share_url = f"https://telegram.me/share/url?url={link}"
 
     await wait_msg.edit_text(
-     f"🔗 *ʏᴏᴜʀ ᴜʀʟ*\n`{link}`",
+     f"*✅ ʟɪɴᴋ ɢᴇɴᴇʀᴀᴛᴇᴅ sᴜᴄᴄᴇssғᴜʟʟʏ!*\n{link}",
      parse_mode="Markdown",
      reply_markup=InlineKeyboardMarkup([
 
-        # Row 1 → Your URL + Share URL
         [
             InlineKeyboardButton("🔗 ʏᴏᴜʀ ᴜʀʟ", url=link),
             InlineKeyboardButton("🔁 sʜᴀʀᴇ ᴜʀʟ", url=share_url),
         ],
 
-        # Row 2 → Copy button
         [
             InlineKeyboardButton("⎙ Copy", callback_data=f"copy_original_{encoded_id}")
         ]
@@ -241,7 +239,7 @@ async def process_link_after_force_sub(update: Update, context: ContextTypes.DEF
         
         # Store the forwarded message info for deletion
         auto_delete_time = settings.get("auto_delete_time", 10)
-        warning_msg = await update.message.reply_text(f"> *⚠️ ɪᴍᴘᴏʀᴛᴀɴᴛ\\:*\n> *ᴛʜɪs ғɪʟᴇ ᴡɪʟʟ ʙᴇ ᴅᴇʟᴇᴛᴇᴅ ɪɴ {auto_delete_time} ᴍɪɴᴜᴛᴇs\\. ᴘʟᴇᴀsᴇ sᴀᴠᴇ ᴏʀ ғᴏʀᴡᴀʀᴅ ɪᴛ ᴛᴏ ʏᴏᴜʀ sᴀᴠᴇᴅ ᴍᴇssᴀɢᴇs ʙᴇғᴏʀᴇ ɪᴛ ɢᴇᴛs ʀᴇᴍᴏᴠᴇᴅ\\.*",
+        warning_msg = await update.message.reply_text(f"> *⚠️ ɪᴍᴘᴏʀᴛᴀɴᴛ\\:*\n\n> *ᴛʜɪs ғɪʟᴇ ᴡɪʟʟ ʙᴇ ᴅᴇʟᴇᴛᴇᴅ ɪɴ {auto_delete_time} ᴍɪɴᴜᴛᴇs\\. ᴘʟᴇᴀsᴇ sᴀᴠᴇ ᴏʀ ғᴏʀᴡᴀʀᴅ ɪᴛ ᴛᴏ ʏᴏᴜʀ sᴀᴠᴇᴅ ᴍᴇssᴀɢᴇs ʙᴇғᴏʀᴇ ɪᴛ ɢᴇᴛs ʀᴇᴍᴏᴠᴇᴅ\\.*",
         parse_mode = "MarkdownV2")
         # Schedule deletion without sending warning message first
         asyncio.create_task(
