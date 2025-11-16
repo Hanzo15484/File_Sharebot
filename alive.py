@@ -1,34 +1,35 @@
 import os
+import time
 from telegram import Update
 from telegram.ext import ContextTypes, CommandHandler
+from ping import format_uptime, BOT_START_TIME
 
-# Leave this EMPTY for now.
-# You will replace it later using /settings command.
-ALIVE_IMAGE_PATH = ""   # example: "assets/alive.jpg"
-
+ALIVE_IMAGE_PATH = ""
 
 async def alive_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
+    uptime_seconds = time.time() - BOT_START_TIME
+    uptime = format_uptime(uptime_seconds)
+
+    # Direct smallcaps text (no function used)
     caption = (
-        "<b>💫 Bot Status: Alive & Running</b>\n\n"
-        "Everything looks good, sweetheart.\n"
-        "Your bot is active and responding smoothly. 💖"
+        "ɪ'ᴍ ᴀʟɪᴠᴇ ʙᴀʙʏ!!\n\n"
+        f"ᴜᴘᴛɪᴍᴇ - {uptime}"
     )
 
-    # If image path is not added yet, send text only:
+    # If image missing -> send text only
     if not ALIVE_IMAGE_PATH or not os.path.exists(ALIVE_IMAGE_PATH):
         await update.message.reply_text(caption, parse_mode="HTML")
         return
 
-    # If image exists, send image + caption
+    # If image exists -> send image + caption
     try:
         await update.message.reply_photo(
             photo=open(ALIVE_IMAGE_PATH, "rb"),
             caption=caption,
             parse_mode="HTML"
         )
-    except Exception:
-        # fallback to text if sending image fails
+    except:
         await update.message.reply_text(caption, parse_mode="HTML")
 
 
