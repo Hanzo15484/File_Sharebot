@@ -150,7 +150,7 @@ async def settings_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
             InlineKeyboardButton("ᴀʟɪᴠᴇ ɪᴍᴀɢᴇ", callback_data="settings_alive_image"),
             InlineKeyboardButton("✖ ᴄʟᴏsᴇ", callback_data="settings_close")
         ]
-
+    ]
     reply_markup = InlineKeyboardMarkup(keyboard)
 
     settings_image = settings.get("settings_image")
