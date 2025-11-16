@@ -316,7 +316,6 @@ async def link_button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE
        await query.message.reply_text(f"Here is your link 🔗 \n`{original_link}`",
        parse_mode="MarkdownV2"
                                      )
-       await query.answer
 
 # Load admin data
 def load_admins():
