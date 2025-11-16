@@ -49,7 +49,7 @@ async def alive_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         f"*ᴜᴘᴛɪᴍᴇ:* {uptime}\n"
         f"*ʀᴇsᴘᴏɴsᴇ:* {internal_ping} ᴍs\n"
         f"*sᴛᴀᴛᴜs:* {status}",
-        parse_mode="Markdown"
+        parse_mode = "Markdown"
     )
 
     # --- update into image + caption ---
