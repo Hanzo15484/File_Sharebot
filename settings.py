@@ -188,7 +188,6 @@ async def settings_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         
 async def settings_button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
-    await query.answer(cache_time=1)
 
     data = query.data
     user_id = query.from_user.id
@@ -396,17 +395,17 @@ async def settings_button_handler(update: Update, context: ContextTypes.DEFAULT_
         if data == "protect_on":
             settings["protect_content"] = True
             save_settings(settings)
-            await query.answer("Protect content enabled!", show_alert=True)
+            await query.answer("Protect content enabled!", show_alert=False)
             await show_updated_protect_menu(query, True)
         elif data == "protect_off":
             settings["protect_content"] = False
             save_settings(settings)
-            await query.answer("Protect content disabled!", show_alert=True)
+            await query.answer("Protect content disabled!", show_alert=False)
             await show_updated_protect_menu(query, False)
 
     elif data == "protect_forward":
        await query.answer(
-         "ᴘʟᴇᴀsᴇ ᴄʜᴏᴏsᴇ ᴛʜᴇ ᴏᴘᴛɪᴏɴ ʙᴇʟᴏᴡ:",
+         "ᴄʟɪᴄᴋ ᴏɴ 'ᴏɴ' ɪғ ʏᴏᴜ ᴡᴀɴᴛ ᴛᴏ ᴅɪsᴀʙʟᴇ ғᴏʀᴡᴀʀᴅɪɴɢ ᴀɴᴅ ᴄᴏᴘʏ ᴏᴘᴛɪᴏɴ ᴇʟsᴇ ᴄʟɪᴄᴋ ᴏɴ 'ᴏғғ'",
          show_alert=True
       )
     # BACK BUTTON
