@@ -343,7 +343,7 @@ async def send_batch_retrieval_message(context, chat_id, encoded_id):
     keyboard = InlineKeyboardMarkup([
         [
             InlineKeyboardButton("♻️ ᴄʟɪᴄᴋ ʜᴇʀᴇ", url=f"https://t.me/{context.bot.username}?start={encoded_id}"),
-            InlineKeyboardButton("ᴄʟᴏsᴇ", callback_data=f"link_close")
+            InlineKeyboardButton("✖︎ ᴄʟᴏsᴇ", callback_data=f"link_close")
         ]
     ])
     
