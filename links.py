@@ -282,7 +282,7 @@ async def delete_and_notify(context, chat_id, file_msg_id, warning_msg_id, delay
     keyboard = InlineKeyboardMarkup([
         [
             InlineKeyboardButton("♻️ ᴄʟɪᴄᴋ ʜᴇʀᴇ", url=f"https://t.me/{context.bot.username}?start={encoded_id}"),
-            InlineKeyboardButton("ᴄʟᴏsᴇ", callback_data=f"link_close")
+            InlineKeyboardButton("✖︎ ᴄʟᴏsᴇ", callback_data=f"link_close")
         ]
     ])
     
