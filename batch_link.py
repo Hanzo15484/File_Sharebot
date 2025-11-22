@@ -211,7 +211,6 @@ async def generate_batch_links(update: Update, context: ContextTypes.DEFAULT_TYP
 
 async def batch_button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
-    await query.answer()
     
     data = query.data
     
@@ -223,7 +222,8 @@ async def batch_button_handler(update: Update, context: ContextTypes.DEFAULT_TYP
             bot_username = context.bot.username
             batch_link = f"https://t.me/{bot_username}?start={encoded_id}"
             
-            await query.answer("Batch link copied to clipboard!", show_alert=True)
+            await query.answer("sᴇɴᴅ sᴜᴄᴄᴇssғᴜʟʟʏ ✅", show_alert=False)
+            await asyncio.sleep(0.07)
             await query.message.reply_text(f"🔗 **Batch Link:**\n`{batch_link}`", parse_mode="Markdown")
 
 async def handle_batch_start(update: Update, context: ContextTypes.DEFAULT_TYPE, encoded_id):
@@ -355,23 +355,11 @@ async def send_batch_retrieval_message(context, chat_id, encoded_id):
             parse_mode="MarkdownV2"
         )
         
-        asyncio.create_task(
-            delete_retrieval_message(context, chat_id, retrieval_msg.message_id, 10)
-        )
     except Exception as e:
         print(f"Error sending batch retrieval message: {e}")
 
-async def delete_retrieval_message(context, chat_id, message_id, delay_minutes):
-    """Delete retrieval message after delay"""
-    await asyncio.sleep(delay_minutes * 60)
-    try:
-        await context.bot.delete_message(chat_id, message_id)
-    except:
-        pass
-
 async def batch_button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
-    await query.answer()
     
     data = query.data
     
@@ -382,7 +370,7 @@ async def batch_button_handler(update: Update, context: ContextTypes.DEFAULT_TYP
         if encoded_id in links:
             bot_username = context.bot.username
             batch_link = f"https://t.me/{bot_username}?start={encoded_id}"
-            
-            await query.answer("Batch link copied to clipboard!", show_alert=True)
-            # You can also send the link as a message
+
+            await query.answer("sᴇɴᴅ sᴜᴄᴄᴇssғᴜʟʟʏ ✅", show_alert=False)
+            await asyncio.sleep(0.07)
             await query.message.reply_text(f"🔗 **Batch Link:**\n`{batch_link}`", parse_mode="Markdown")
