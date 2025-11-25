@@ -3,7 +3,6 @@ from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import ContextTypes
 from middleware import check_ban_and_register
 import asyncio
-from permission import CheckBotAdmin
 
 OWNER_ID = 5373577888
 # Load admin data
