@@ -659,7 +659,7 @@ def register_mkadmin_handlers(app):
 
     app.add_handler(CallbackQueryHandler(admin_panel_callback, pattern="^panel_"))
     app.add_handler(CallbackQueryHandler(admin_panel_callback, pattern="^admin_"))
-    app.add_handler(CallbackQueryHandler(admin_panel_callback, pattern="^expired_"))
+    app.add_handler(CallbackQueryHandler(admin_panel_callback, pattern="^expired_.*"))
     app.add_handler(CallbackQueryHandler(admin_panel_callback, pattern="^close_msg$"))
 
     # feedback messages
