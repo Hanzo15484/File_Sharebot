@@ -1,556 +1,659 @@
 # mkadmin.py
-# COMPLETE ADMIN SYSTEM — FULLY MERGED AND OPTIMIZED
 
 import os
 import json
 from datetime import datetime, timedelta
-from telegram import (
-    Update,
-    InlineKeyboardButton,
-    InlineKeyboardMarkup
-)
-from telegram.ext import (
-    ContextTypes,
-    CommandHandler,
-    CallbackQueryHandler
-)
+from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
+from telegram.ext import ContextTypes
+from telegram.ext import MessageHandler, filters
 
 OWNER_ID = 5373577888
 
+ADMINS_FILE = "admins.json"
+LOG_FILE = "admin_logs.txt"
+NOTIFIED_FILE = "expiry_notified.json"
+
+# uid → {"24h": job, "12h": job, ..., "final": job}
+SCHEDULED_JOBS = {}
+
 # ============================================================
-#               FULL ADMIN DATA HANDLING
+# FILE I/O HELPERS
 # ============================================================
 
 def load_admins_full():
     try:
-        with open("admins.json", "r") as f:
-            return json.load(f)
+        with open(ADMINS_FILE, "r", encoding="utf-8") as f:
+            data = json.load(f)
+            data.setdefault("admins", [OWNER_ID])
+            data.setdefault("expiry", {})
+            return data
     except:
         return {"admins": [OWNER_ID], "expiry": {}}
 
-
 def save_admins_full(data):
-    with open("admins.json", "w") as f:
+    with open(ADMINS_FILE, "w", encoding="utf-8") as f:
         json.dump(data, f, indent=4)
-
-
-# ============================================================
-#               EXPIRY NOTIFICATION STORAGE
-# ============================================================
 
 def load_notified():
     try:
-        with open("expiry_notified.json", "r") as f:
+        with open(NOTIFIED_FILE, "r", encoding="utf-8") as f:
             return json.load(f)
     except:
         return {}
 
-
 def save_notified(data):
-    with open("expiry_notified.json", "w") as f:
+    with open(NOTIFIED_FILE, "w", encoding="utf-8") as f:
         json.dump(data, f, indent=4)
 
-
-# ============================================================
-#                     LOGGING + ROTATION
-# ============================================================
-
-def rotate_logs(max_size_kb=300):
+def log_action(text):
     try:
-        size = os.path.getsize("admin_logs.txt") / 1024
-        if size > max_size_kb:
-            with open("admin_logs.txt", "r", encoding="utf-8") as f:
-                lines = f.readlines()
-
-            lines = lines[-250:]
-
-            with open("admin_logs.txt", "w", encoding="utf-8") as f:
-                f.writelines(lines)
-
-            log_action("LOG ROTATION → Old logs removed")
+        with open(LOG_FILE, "a", encoding="utf-8") as f:
+            f.write(f"{datetime.utcnow().isoformat()} UTC • {text}\n")
     except:
         pass
 
+# ============================================================
+# TIME HELPERS (IST)
+# ============================================================
 
-def log_action(text):
-    rotate_logs()
-    with open("admin_logs.txt", "a", encoding="utf-8") as f:
-        f.write(f"{datetime.utcnow().isoformat()} UTC • {text}\n")
+def utcnow():
+    return datetime.utcnow()
+
+def to_ist(dt_utc):
+    return dt_utc + timedelta(hours=5, minutes=30)
+
+def format_ist(dt_utc):
+    return to_ist(dt_utc).strftime("%d-%m-%Y %I:%M %p IST")
+
+def format_ist_date(dt_utc):
+    return to_ist(dt_utc).strftime("%d-%m-%Y")
+
+def format_ist_time(dt_utc):
+    return to_ist(dt_utc).strftime("%I:%M %p IST")
 
 
 # ============================================================
-#               AUTO-REMOVE EXPIRED ADMINS
+# CANCEL JOBS
 # ============================================================
 
-def cleanup_expired_admins():
-    data = load_admins_full()
-    admins = data["admins"]
-    expiry = data.get("expiry", {})
-    notified = load_notified()
-
-    now = datetime.utcnow()
-    expired_list = []
-    changed = False
-
-    for uid, exp_time in expiry.copy().items():
-        exp_dt = datetime.fromisoformat(exp_time)
-        if now >= exp_dt:
-            expired_list.append(int(uid))
-
-    for uid in expired_list:
-        if uid in admins:
-            admins.remove(uid)
-
-        expiry.pop(str(uid), None)
-        notified.pop(str(uid), None)
-
-        log_action(f"AUTO-EXPIRE → Admin {uid} removed by system")
-        changed = True
-
-    if changed:
-        data["admins"] = admins
-        data["expiry"] = expiry
-        save_admins_full(data)
-        save_notified(notified)
-
-    return expired_list
+def cancel_admin_jobs(application, user_id):
+    if user_id not in SCHEDULED_JOBS:
+        return
+    for job in SCHEDULED_JOBS[user_id].values():
+        try:
+            job.schedule_removal()
+        except:
+            pass
+    SCHEDULED_JOBS[user_id] = {}
 
 
 # ============================================================
-#                EXPIRY NOTIFICATION SYSTEM
+# SCHEDULE JOBS
 # ============================================================
 
-async def notify_expiring_admins(context):
+def schedule_admin_jobs(application, user_id, exp_dt_utc):
+    cancel_admin_jobs(application, user_id)
+
+    now = utcnow()
+    remaining = (exp_dt_utc - now).total_seconds()
+    if remaining <= 0:
+        return
+
+    SCHEDULED_JOBS[user_id] = {}
+    jq = application.job_queue
+
+    stages = [
+        ("24h", 24 * 3600),
+        ("12h", 12 * 3600),
+        ("6h", 6 * 3600),
+        ("2h", 2 * 3600),
+    ]
+
+    for label, sec_before in stages:
+        t = exp_dt_utc - timedelta(seconds=sec_before)
+        if t > now:
+            job = jq.run_once(
+                warning_callback,
+                when=(t - now).total_seconds(),
+                data={"uid": user_id, "label": label},
+                name=f"warn_{user_id}_{label}"
+            )
+            SCHEDULED_JOBS[user_id][label] = job
+
+    # final expiry job
+    final_job = jq.run_once(
+        expiry_callback,
+        when=remaining,
+        data={"uid": user_id},
+        name=f"expire_{user_id}"
+    )
+    SCHEDULED_JOBS[user_id]["final"] = final_job
+
+
+# ============================================================
+# WARNING CALLBACK
+# ============================================================
+
+async def warning_callback(context: ContextTypes.DEFAULT_TYPE):
+    job = context.job
+    uid = job.data["uid"]
+    label = job.data["label"]
+
     data = load_admins_full()
     expiry = data["expiry"]
-    notified = load_notified()
-    now = datetime.utcnow()
 
-    THRESHOLDS = {
-        "24h": 24 * 3600,
-        "12h": 12 * 3600,
-        "6h": 6 * 3600,
-        "2h": 2 * 3600,
-    }
+    if str(uid) not in expiry:
+        return
 
-    for uid, exp_time in expiry.items():
-        exp_dt = datetime.fromisoformat(exp_time)
-        remaining = (exp_dt - now).total_seconds()
-
-        # Timeout happened
-        if remaining <= 0:
-            if str(uid) not in notified or notified[str(uid)] != "timeout":
-                try:
-                    await context.bot.send_message(
-                        int(uid),
-                        "❌ Your admin access has expired.\nYou are no longer an admin.",
-                        parse_mode="HTML"
-                    )
-                except:
-                    pass
-
-                notified[str(uid)] = "timeout"
-                save_notified(notified)
-            continue
-
-        # Send notifications for thresholds
-        for label, seconds in THRESHOLDS.items():
-            if remaining <= seconds:
-
-                if str(uid) in notified and notified[str(uid)] == label:
-                    break  # Already notified this level
-
-                hours = int(seconds / 3600)
-
-                text = (
-                    f"⚠️ <b>Admin Access Expiring Soon</b>\n\n"
-                    f"<b>Remaining:</b> ~{hours} hours\n"
-                    f"<b>Expires:</b> {exp_dt.strftime('%d-%m-%Y %I:%M %p UTC')}"
-                )
-
-                try:
-                    await context.bot.send_message(int(uid), text, parse_mode="HTML")
-                except:
-                    pass
-
-                notified[str(uid)] = label
-                save_notified(notified)
-
-                log_action(f"EXPIRY NOTICE ({label}) → {uid}")
-
-                break
-
-
-# ============================================================
-#                      MENTION HELPER
-# ============================================================
-
-def mention_html(user_id, name):
-    name = name.replace("<", "").replace(">", "")
-    return f"<a href=\"tg://user?id={user_id}\">{name}</a>"
-
-
-# ============================================================
-#                      DURATION PARSER
-# ============================================================
-
-def parse_duration(duration_str):
-    if not duration_str:
-        return None
+    exp_dt = datetime.fromisoformat(expiry[str(uid)])
+    remain = (exp_dt - utcnow()).total_seconds()
+    hrs = int(remain // 3600)
+    mins = int((remain % 3600) // 60)
 
     try:
-        if duration_str.endswith("d"):
-            return timedelta(days=int(duration_str[:-1]))
+        await context.bot.send_message(
+            chat_id=uid,
+            text=(
+                "⚠️ <b>Your admin access is expiring soon</b>\n\n"
+                f"<b>Expires:</b> {format_ist(exp_dt)}\n"
+                f"<b>Time left:</b> {hrs}h {mins}m"
+            ),
+            parse_mode="HTML"
+        )
+    except:
+        pass
 
-        if duration_str.endswith("m"):
-            return timedelta(days=int(duration_str[:-1]) * 30)
+    log_action(f"WARNING {label} → {uid}")
 
-        if duration_str.endswith("y"):
-            return timedelta(days=int(duration_str[:-1]) * 365)
 
-        if duration_str.endswith("h"):
-            return timedelta(hours=int(duration_str[:-1]))
+# ============================================================
+# FINAL EXPIRY CALLBACK
+# ============================================================
 
-        if duration_str.endswith("min"):
-            return timedelta(minutes=int(duration_str[:-3]))
+async def expiry_callback(context: ContextTypes.DEFAULT_TYPE):
+    job = context.job
+    uid = job.data["uid"]
+
+    data = load_admins_full()
+    admins = data["admins"]
+    expiry = data["expiry"]
+
+    if uid in admins:
+        admins.remove(uid)
+    expiry.pop(str(uid), None)
+    save_admins_full(data)
+
+    cancel_admin_jobs(context.application, uid)
+
+    kb = InlineKeyboardMarkup([
+        [
+            InlineKeyboardButton("Okay!", callback_data="expired_okay"),
+            InlineKeyboardButton("Feedback", callback_data="expired_feedback"),
+            InlineKeyboardButton("Owner", url="https://t.me/Quarel7")
+        ]
+    ])
+
+    try:
+        await context.bot.send_message(
+            chat_id=uid,
+            text=(
+                "❌ <b>Your admin access has expired.</b>\n"
+                "You no longer have admin privileges."
+            ),
+            parse_mode="HTML",
+            reply_markup=kb
+        )
+    except:
+        pass
+
+    log_action(f"EXPIRED → {uid}")
+
+
+# ============================================================
+# FEEDBACK TEXT HANDLER
+# ============================================================
+
+async def feedback_text_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    if not context.user_data.get("awaiting_feedback"):
+        return
+
+    context.user_data["awaiting_feedback"] = False
+    user = update.effective_user
+    msg = update.message.text
+
+    # send feedback to owner
+    try:
+        await context.bot.send_message(
+            chat_id=OWNER_ID,
+            text=(
+                "📩 <b>Admin Feedback Received</b>\n\n"
+                f"<b>From:</b> <a href=\"tg://user?id={user.id}\">{user.first_name}</a>\n"
+                f"<b>User ID:</b> <code>{user.id}</code>\n\n"
+                f"<b>Message:</b>\n{msg}"
+            ),
+            parse_mode="HTML"
+        )
+    except:
+        pass
+
+    # confirm to user
+    await update.message.reply_html("✨ <b>Thanks for your feedback!</b>")
+
+
+# ============================================================
+# DURATION PARSER
+# ============================================================
+
+def parse_duration(s):
+    if not s:
+        return None
+    s = s.lower().replace(" ", "")
+    try:
+        if s.endswith("min"):
+            return timedelta(minutes=int(s[:-3]))
+        if s.endswith("h"):
+            return timedelta(hours=int(s[:-1]))
+        if s.endswith("d"):
+            return timedelta(days=int(s[:-1]))
+        if s.endswith("y"):
+            return timedelta(days=int(s[:-1]) * 365)
+        if s.endswith("m"):
+            return timedelta(days=int(s[:-1]) * 30)
     except:
         return None
-
     return None
 
 
 # ============================================================
-#                         /PROMOTE
+# PROMOTE
 # ============================================================
 
 async def promote_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    cleanup_expired_admins()
-    await notify_expiring_admins(context)
-
+    user = update.effective_user
     data = load_admins_full()
-    admins = data["admins"]
-    expiry_map = data["expiry"]
 
-    issuer = update.effective_user
-
-    if issuer.id not in admins and issuer.id != OWNER_ID:
+    if user.id not in data["admins"] and user.id != OWNER_ID:
         return
 
     if len(context.args) == 0:
         await update.message.reply_html(
-            "ᴘʟᴇᴀsᴇ ᴜsᴇ <b>/promote &lt;user_id&gt; &lt;duration(optional)&gt;</b>"
+            "Use: <b>/promote &lt;user_id&gt; &lt;duration(optional)&gt;</b>\n\n"
+            "Duration examples: 2d, 6h, 5min, 1y, 3m"
         )
         return
 
     try:
         target_id = int(context.args[0])
     except:
-        await update.message.reply_html("❌ Invalid user_id.")
+        await update.message.reply_text("Invalid user ID.")
         return
 
     duration_str = context.args[1] if len(context.args) > 1 else None
     duration = parse_duration(duration_str)
+    now = utcnow()
 
-    if target_id in admins:
-        await update.message.reply_html("⚠️ User is already an admin.")
-        return
+    admins = data["admins"]
+    expiry = data["expiry"]
 
-    admins.append(target_id)
-    now_utc = datetime.utcnow()
+    # if already admin re-promote (reset timer)
+    cancel_admin_jobs(context.application, target_id)
+
+    if target_id not in admins:
+        admins.append(target_id)
 
     if duration:
-        exp_at = now_utc + duration
-        expiry_map[str(target_id)] = exp_at.isoformat()
-        exp_text = exp_at.strftime("%d-%m-%Y %I:%M %p UTC")
+        exp_dt = now + duration
+        expiry[str(target_id)] = exp_dt.isoformat()
+        duration_text = format_ist(exp_dt)
     else:
-        exp_text = "Permanent"
-        expiry_map.pop(str(target_id), None)
+        expiry.pop(str(target_id), None)
+        exp_dt = None
+        duration_text = "Permanent"
 
-    data["admins"] = admins
-    data["expiry"] = expiry_map
     save_admins_full(data)
 
+    log_action(f"PROMOTED → {target_id} by {user.id} duration={duration_text}")
+
+    # fetch user
     try:
-        t_user = await context.bot.get_chat(target_id)
-        t_name = t_user.first_name
+        tg_user = await context.bot.get_chat(target_id)
+        target_mention = tg_user.mention_html()
     except:
-        t_name = "Unknown User"
+        target_mention = f'<a href="tg://user?id={target_id}">{target_id}</a>'
 
-    name_html = mention_html(target_id, t_name)
-    promoted_by = mention_html(issuer.id, issuer.first_name)
-
-    date = now_utc.strftime("%d-%m-%Y")
-    time = now_utc.strftime("%I:%M %p")
-
-    log_action(f"PROMOTED → {target_id} by {issuer.id} | Duration: {exp_text}")
-
-    btn = InlineKeyboardMarkup([[InlineKeyboardButton("✖ Close", callback_data="close_msg")]])
+    promoter_mention = f'<a href="tg://user?id={user.id}">{user.first_name}</a>'
 
     msg = (
         "<b>Admin Promoted Successfully ✔</b>\n\n"
-        f"<b>Name:</b> {name_html}\n"
+        f"<b>Name:</b> {target_mention}\n"
         f"<b>User ID:</b> <code>{target_id}</code>\n"
-        f"<b>Promoted by:</b> {promoted_by}\n"
-        f"<b>Promoted on:</b> {date} (UTC)\n"
-        f"<b>Time:</b> {time} (UTC)\n"
-        f"<b>Duration:</b> {exp_text}"
+        f"<b>Promoted by:</b> {promoter_mention}\n"
+        f"<b>Promoted on:</b> {format_ist(now)}\n"
+        f"<b>Duration:</b> {duration_text}\n\n"
+        "<b>Usage:</b>\n"
+        "/promote &lt;user_id&gt; &lt;duration(optional)&gt;\n\n"
+        "<b>Duration Format:</b>\n"
+        "y=year, m=month, d=day, h=hour, min=minute\n"
+        "<b>Examples:</b> 2d, 6h, 5min, 1y, 3m"
     )
 
-    await update.message.reply_html(msg, reply_markup=btn)
-    await notify_expiring_admins(context)
+    kb = InlineKeyboardMarkup([
+        [
+            InlineKeyboardButton("👑 Owner", url="https://t.me/Quarel7"),
+            InlineKeyboardButton("✖ Close", callback_data="close_msg"),
+        ]
+    ])
+
+    await update.message.reply_html(msg, reply_markup=kb)
+
+    # notify promoted user
+    try:
+        user_kb = InlineKeyboardMarkup([
+            [InlineKeyboardButton("👑 Owner", url="https://t.me/Quarel7")],
+            [InlineKeyboardButton("Okay!", callback_data="admin_okay")]
+        ])
+        await context.bot.send_message(
+            chat_id=target_id,
+            text=(
+                "🎉 <b>Congratulations!</b>\n\n"
+                "You are now an <b>admin</b>.\n"
+                f"<b>Expires:</b> {duration_text}"
+            ),
+            parse_mode="HTML",
+            reply_markup=user_kb
+        )
+    except:
+        pass
+
+    # schedule jobs
+    if exp_dt:
+        schedule_admin_jobs(context.application, target_id, exp_dt)
 
 
 # ============================================================
-#                          /DEMOTE
+# DEMOTE
 # ============================================================
 
 async def demote_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    cleanup_expired_admins()
-    await notify_expiring_admins(context)
-
+    user = update.effective_user
     data = load_admins_full()
-    admins = data["admins"]
-    expiry_map = data["expiry"]
 
-    issuer = update.effective_user
-
-    if issuer.id not in admins and issuer.id != OWNER_ID:
+    if user.id not in data["admins"] and user.id != OWNER_ID:
         return
 
     if len(context.args) == 0:
-        await update.message.reply_html("ᴘʟᴇᴀsᴇ ᴜsᴇ <b>/demote &lt;user_id&gt;</b>")
+        await update.message.reply_html("Use: <b>/demote &lt;user_id&gt;</b>")
         return
 
     try:
         target_id = int(context.args[0])
     except:
-        await update.message.reply_html("❌ Invalid user_id.")
+        await update.message.reply_text("Invalid ID.")
         return
 
+    admins = data["admins"]
+    expiry = data["expiry"]
+
     if target_id not in admins:
-        await update.message.reply_html("⚠️ This user is not an admin.")
+        await update.message.reply_text("This user is not admin.")
         return
 
     if target_id == OWNER_ID:
-        await update.message.reply_html("❌ You cannot demote the owner.")
+        await update.message.reply_text("Cannot demote owner.")
         return
 
     admins.remove(target_id)
-    expiry_map.pop(str(target_id), None)
-
-    data["admins"] = admins
-    data["expiry"] = expiry_map
+    expiry.pop(str(target_id), None)
     save_admins_full(data)
+    cancel_admin_jobs(context.application, target_id)
 
+    log_action(f"DEMOTED → {target_id} by {user.id}")
+
+    # mention
     try:
-        t_user = await context.bot.get_chat(target_id)
-        t_name = t_user.first_name
+        tg_user = await context.bot.get_chat(target_id)
+        mention = tg_user.mention_html()
     except:
-        t_name = "Unknown User"
-
-    now_utc = datetime.utcnow()
-
-    log_action(f"DEMOTED → {target_id} by {issuer.id}")
-
-    name_html = mention_html(target_id, t_name)
-    demoted_by = mention_html(issuer.id, issuer.first_name)
-
-    date = now_utc.strftime("%d-%m-%Y")
-    time = now_utc.strftime("%I:%M %p")
-
-    btn = InlineKeyboardMarkup([[InlineKeyboardButton("✖ Close", callback_data="close_msg")]])
+        mention = f'<a href="tg://user?id={target_id}">{target_id}</a>'
 
     msg = (
         "<b>User Demoted Successfully ✔</b>\n\n"
-        f"<b>Name:</b> {name_html}\n"
+        f"<b>Name:</b> {mention}\n"
         f"<b>User ID:</b> <code>{target_id}</code>\n"
-        f"<b>Demoted by:</b> {demoted_by}\n"
-        f"<b>Demoted on:</b> {date} (UTC)\n"
-        f"<b>Time:</b> {time} (UTC)"
+        f"<b>Demoted by:</b> <a href=\"tg://user?id={user.id}\">{user.first_name}</a>\n"
+        f"<b>Demoted on:</b> {format_ist(utcnow())}"
     )
 
-    await update.message.reply_html(msg, reply_markup=btn)
-    await notify_expiring_admins(context)
+    kb = InlineKeyboardMarkup([
+        [InlineKeyboardButton("✖ Close", callback_data="close_msg")]
+    ])
 
+    await update.message.reply_html(msg, reply_markup=kb)
 
-# ============================================================
-#                    /ADMIN_LOGS (Pagination)
-# ============================================================
-
-async def admin_logs_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    cleanup_expired_admins()
-    await notify_expiring_admins(context)
-
-    data = load_admins_full()
-    admins = data["admins"]
-
-    if update.effective_user.id not in admins and update.effective_user.id != OWNER_ID:
-        return
-
-    page = int(context.args[0]) if context.args else 1
-
+    # notify user
     try:
-        with open("admin_logs.txt", "r", encoding="utf-8") as f:
-            logs = f.readlines()
+        await context.bot.send_message(
+            chat_id=target_id,
+            text="⚠️ Your admin role has been removed.",
+        )
     except:
-        logs = []
-
-    logs.reverse()
-    per_page = 10
-    start = (page - 1) * per_page
-    end = start + per_page
-
-    chunk = logs[start:end]
-
-    if not chunk:
-        await update.message.reply_text("No logs available.")
-        return
-
-    text = "<b>📜 Admin Logs</b>\n\n"
-    for line in chunk:
-        text += f"• {line}\n"
-
-    buttons = []
-
-    if start > 0:
-        buttons.append(InlineKeyboardButton("⬅ Prev", callback_data=f"log_prev_{page}"))
-
-    if end < len(logs):
-        buttons.append(InlineKeyboardButton("Next ➡", callback_data=f"log_next_{page}"))
-
-    markup = InlineKeyboardMarkup([buttons]) if buttons else None
-
-    await update.message.reply_html(text, reply_markup=markup)
-
-
-async def logs_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    query = update.callback_query
-    data = query.data
-
-    if data.startswith("log_prev_"):
-        p = int(data.split("_")[-1]) - 1
-    elif data.startswith("log_next_"):
-        p = int(data.split("_")[-1]) + 1
-    else:
-        return
-
-    await query.answer()
-    await admin_logs_handler(update, context)
+        pass
 
 
 # ============================================================
-#                   FULL ADMIN CONTROL PANEL
+# ADMIN PANEL + CALLBACKS
 # ============================================================
 
-async def admin_panel(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    cleanup_expired_admins()
-    await notify_expiring_admins(context)
-
-    data = load_admins_full()
-    admins = data["admins"]
-
-    if update.effective_user.id not in admins and update.effective_user.id != OWNER_ID:
-        return
-
-    kb = [
+def build_admin_panel_kb():
+    return InlineKeyboardMarkup([
         [InlineKeyboardButton("👑 Admins", callback_data="panel_admins")],
         [InlineKeyboardButton("➕ Promote", callback_data="panel_promote")],
         [InlineKeyboardButton("➖ Demote", callback_data="panel_demote")],
-        [InlineKeyboardButton("📜 Logs", callback_data="panel_logs")],
         [InlineKeyboardButton("⚠ Expiring Admins", callback_data="panel_expiring")],
-        [InlineKeyboardButton("✖ Close Panel", callback_data="close_msg")],
-    ]
+        [InlineKeyboardButton("📜 Logs", callback_data="panel_logs")],
+        [InlineKeyboardButton("👑 Owner", url="https://t.me/Quarel7")],
+        [InlineKeyboardButton("✖ Close Panel", callback_data="close_msg")]
+    ])
 
+
+async def admin_panel(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    data = load_admins_full()
+    if update.effective_user.id not in data["admins"] and update.effective_user.id != OWNER_ID:
+        return
     await update.message.reply_html(
-        "<b>🛠 Admin Control Panel</b>\nChoose an option:",
-        reply_markup=InlineKeyboardMarkup(kb)
+        "<b>🛠 Admin Control Panel</b>",
+        reply_markup=build_admin_panel_kb()
     )
 
+
+# ------------------------------------------------------------
+# Panel callback
+# ------------------------------------------------------------
 
 async def admin_panel_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
     data = query.data
+    await query.answer()
 
-    # Show admins
+    d = load_admins_full()
+    admins = d["admins"]
+    expiry = d["expiry"]
+
+    # --------------------
+    # ADMIN LIST
+    # --------------------
     if data == "panel_admins":
-        data2 = load_admins_full()
-        adm = data2["admins"]
-        txt = "<b>👑 Current Admins:</b>\n\n"
-        for a in adm:
-            txt += f"• <code>{a}</code>\n"
-        await query.message.edit_text(txt, parse_mode="HTML")
+        text = "<b>👑 Current Admins</b>\n\n"
+        for uid in admins:
+            try:
+                u = await context.bot.get_chat(uid)
+                mention = u.mention_html()
+            except:
+                mention = f'<a href="tg://user?id={uid}">{uid}</a>'
+            if str(uid) in expiry:
+                exp_dt = datetime.fromisoformat(expiry[str(uid)])
+                e = format_ist(exp_dt)
+            else:
+                e = "Permanent"
 
-    # Promote instructions
-    elif data == "panel_promote":
+            text += f"• {mention}\n  ID: <code>{uid}</code>\n  Expires: {e}\n\n"
+
+        kb = InlineKeyboardMarkup([
+            [InlineKeyboardButton("⬅ Back", callback_data="admin_back"),
+             InlineKeyboardButton("✖ Close", callback_data="close_msg")]
+        ])
+
+        await query.message.edit_text(text, parse_mode="HTML", reply_markup=kb)
+        return
+
+    # --------------------
+    # Promote info
+    # --------------------
+    if data == "panel_promote":
         await query.message.edit_text(
-            "Use:\n<b>/promote &lt;user_id&gt; &lt;duration(optional)&gt;</b>",
+            "Use:\n<b>/promote &lt;user_id&gt; &lt;duration(optional)&gt;</b>\n"
+            "Examples: 2d, 6h, 5min, 1y, 3m",
             parse_mode="HTML"
         )
+        return
 
-    # Demote instructions
-    elif data == "panel_demote":
+    # --------------------
+    # Demote info
+    # --------------------
+    if data == "panel_demote":
         await query.message.edit_text(
             "Use:\n<b>/demote &lt;user_id&gt;</b>",
             parse_mode="HTML"
         )
+        return
 
-    # View logs
-    elif data == "panel_logs":
+    # --------------------
+    # Logs info
+    # --------------------
+    if data == "panel_logs":
+        await query.message.edit_text("Open logs:\n<b>/admin_logs</b>", parse_mode="HTML")
+        return
+
+    # --------------------
+    # EXPIRING ADMINS
+    # --------------------
+    if data == "panel_expiring":
+        now = utcnow()
+        soon = []
+        long = []
+
+        for uid, ts in expiry.items():
+            exp_dt = datetime.fromisoformat(ts)
+            rem = (exp_dt - now).total_seconds()
+
+            try:
+                u = await context.bot.get_chat(int(uid))
+                m = u.mention_html()
+            except:
+                m = f'<a href="tg://user?id={uid}">{uid}</a>'
+
+            if rem <= 86400:
+                h = int(rem // 3600)
+                mn = int((rem % 3600) // 60)
+                soon.append(f"• {m} — <b>{h}h {mn}m</b>")
+            else:
+                long.append(f"• {m} — Expires: {format_ist(exp_dt)}")
+
+        text = ""
+        if soon:
+            text += "<b>⚠ Expiring Within 24h</b>\n\n" + "\n".join(soon) + "\n\n"
+        if long:
+            text += "<b>🕒 Long-term Admins</b>\n\n" + "\n".join(long)
+
+        if not soon and not long:
+            await query.message.edit_text("No admins with expiry.", parse_mode="HTML")
+            return
+
+        kb = InlineKeyboardMarkup([
+            [InlineKeyboardButton("⬅ Back", callback_data="admin_back"),
+             InlineKeyboardButton("✖ Close", callback_data="close_msg")]
+        ])
+        await query.message.edit_text(text, parse_mode="HTML", reply_markup=kb)
+        return
+
+    # --------------------
+    # BACK BUTTON
+    # --------------------
+    if data == "admin_back":
         await query.message.edit_text(
-            "Open logs with:\n<b>/admin_logs</b>",
-            parse_mode="HTML"
+            "<b>🛠 Admin Control Panel</b>",
+            parse_mode="HTML",
+            reply_markup=build_admin_panel_kb()
         )
+        return
 
-    # Expiring admins (<24h)
-    elif data == "panel_expiring":
-        data2 = load_admins_full()
-        expiry = data2["expiry"]
-        now = datetime.utcnow()
+    # --------------------
+    # Expiry: "Okay!"
+    # --------------------
+    if data == "expired_okay":
+        await query.answer("Thank you!", show_alert=True)
+        return
 
-        txt = "<b>⚠ Admins Expiring Soon:</b>\n\n"
-        found = False
+    # --------------------
+    # Expiry: Feedback
+    # --------------------
+    if data == "expired_feedback":
+        context.user_data["awaiting_feedback"] = True
+        await query.message.reply_html("💬 <b>Please type your feedback.</b>")
+        return
 
-        for uid, exp in expiry.items():
-            exp_dt = datetime.fromisoformat(exp)
-            remaining = exp_dt - now
-
-            if remaining.total_seconds() <= 86400:
-                found = True
-                txt += (
-                    f"• <code>{uid}</code>\n"
-                    f"  Expires: {exp_dt.strftime('%d-%m-%Y %I:%M %p UTC')}\n"
-                    f"  Time Left: {str(remaining).split('.')[0]}\n\n"
-                )
-
-        if not found:
-            txt = "No admins expiring within 24 hours."
-
-        await query.message.edit_text(txt, parse_mode="HTML")
-
-    await query.answer()
+    # --------------------
+    # Close
+    # --------------------
+    if data == "close_msg":
+        try:
+            await query.message.delete()
+        except:
+            pass
+        return
 
 
 # ============================================================
-#                CLOSE INLINE MESSAGE
+# LOG VIEWER (simplified)
 # ============================================================
 
-async def close_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
+async def admin_logs_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    user = update.effective_user
+    data = load_admins_full()
+    if user.id not in data["admins"] and user.id != OWNER_ID:
+        return
+
     try:
-        await update.callback_query.message.delete()
+        with open(LOG_FILE, "r", encoding="utf-8") as f:
+            lines = f.readlines()
     except:
-        await update.callback_query.answer("Already removed.")
+        lines = []
+
+    if not lines:
+        await update.message.reply_text("No logs.")
+        return
+
+    lines = lines[-40:]  # last 40 entries
+    text = "<b>📜 Admin Logs</b>\n\n" + "".join(lines)
+    await update.message.reply_html(text)
 
 
 # ============================================================
-#            REGISTER HANDLERS FOR main.py
+# REGISTER HANDLERS
 # ============================================================
 
-def register_mkadmin_handlers(application):
-    application.add_handler(CommandHandler("promote", promote_handler))
-    application.add_handler(CommandHandler("demote", demote_handler))
-    application.add_handler(CommandHandler("admin_logs", admin_logs_handler))
-    application.add_handler(CommandHandler("adminpanel", admin_panel))
+def register_mkadmin_handlers(app):
+    from telegram.ext import CommandHandler, CallbackQueryHandler
 
-    application.add_handler(CallbackQueryHandler(close_callback, pattern="close_msg"))
-    application.add_handler(CallbackQueryHandler(logs_callback, pattern="log_"))
-    application.add_handler(CallbackQueryHandler(admin_panel_callback, pattern="panel_"))
+    app.add_handler(CommandHandler("promote", promote_handler))
+    app.add_handler(CommandHandler("demote", demote_handler))
+    app.add_handler(CommandHandler("admin_logs", admin_logs_handler))
+    app.add_handler(CommandHandler("adminpanel", admin_panel))
+
+    app.add_handler(CallbackQueryHandler(admin_panel_callback, pattern="^panel_"))
+    app.add_handler(CallbackQueryHandler(admin_panel_callback, pattern="^admin_"))
+    app.add_handler(CallbackQueryHandler(admin_panel_callback, pattern="^expired_"))
+    app.add_handler(CallbackQueryHandler(admin_panel_callback, pattern="^close_msg$"))
+
+    # feedback messages
+    app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, feedback_text_handler))
