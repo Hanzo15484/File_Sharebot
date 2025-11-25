@@ -22,7 +22,6 @@ from stats import stats_command
 from alive import alive_command
 from mkadmin import register_mkadmin_handlers, cleanup_expired_admins, notify_expiring_admins
 
-from shared_functions import ensure_admin_files_exist
 # Set up logging
 logging.basicConfig(
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
