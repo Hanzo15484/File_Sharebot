@@ -3,6 +3,9 @@ from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import ContextTypes
 from middleware import check_ban_and_register
 import asyncio
+from permission import CheckBotAdmin
+
+OWNER_ID = 5373577888
 # Load admin data
 def load_admins():
     try:
@@ -64,7 +67,6 @@ async def start_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
-    await query.answer()
     
     data = query.data
     user_id = query.from_user.id
@@ -116,8 +118,8 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     
     elif data == "start_help":
         admins = load_admins()
-        if user_id not in admins and user_id != 5373577888:  # Owner ID
-            await query.answer("You are not my senpai!", show_alert=True)
+        if user_id not in admins and user_id != OWNER_ID:
+            await query.answer("You are not authorized to use this bot", show_alert=True)
             return
         
         # If user is admin/owner, show help menu
