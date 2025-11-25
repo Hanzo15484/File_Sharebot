@@ -664,4 +664,4 @@ def register_mkadmin_handlers(app):
 
     # feedback messages
     app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, feedback_text_handler), 
-    group=30)
+    group=999)
