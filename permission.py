@@ -26,7 +26,7 @@ except Exception:
     except Exception:
         try:
             # fallback to shared_functions (if you added load_admins_full there)
-            from shared_functions import load_admins_full as _laf, load_admins as _legacy
+            from mkadmin import load_admins_full as _laf, load_admins as _legacy
             load_admins_full_fn = _laf
             # no cleanup in shared_functions in many setups
         except Exception:
