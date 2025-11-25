@@ -294,3 +294,12 @@ def clear_notification(user_id):
     if str(user_id) in notified:
         notified.pop(str(user_id))
         save_notified(notified)
+# Ensure admin-related JSON files exist (needed by main.py)
+def ensure_admin_files_exist():
+    if not os.path.exists("admins.json"):
+        with open("admins.json", "w") as f:
+            json.dump([5373577888], f)
+
+    if not os.path.exists("expiry_notified.json"):
+        with open("expiry_notified.json", "w") as f:
+            json.dump({}, f)
