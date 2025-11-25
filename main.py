@@ -20,7 +20,7 @@ from shortened import shortener_handler, shortlink_handler, shortener_button_han
 from ping import ping_command
 from stats import stats_command
 from alive import alive_command
-from mkadmin import register_mkadmin_handlers, cleanup_expired_admins, notify_expiring_admins
+from mkadmin import register_mkadmin_handlers
 from shared_functions import ensure_admin_files_exist
 
 # Set up logging
@@ -183,16 +183,6 @@ def main():
 
     register_mkadmin_handlers(application)
 
-    async def periodic_admin_checks(context):
-        cleanup_expired_admins()
-        await notify_expiring_admins(context)
-
-    try:
-        application.job_queue.run_repeating(periodic_admin_checks, interval=1800, first=10)
-        print("⏱ Scheduled admin expiry checks (every 30 minutes)")
-    except Exception as e:
-        print(f"❌ Job queue failed: {e}")
-                                            
     # Error handler
     async def error_handler(update: object, context):
         logging.error(f"Exception while handling an update: {context.error}")
@@ -237,7 +227,6 @@ def main():
     else:
         print("   ⚠️  img.jpg not found (bot will use text-only messages)")
         
-    cleanup_expired_admins()
     # Start the bot
     print(f"\n🚀 Starting bot...")
     print("Press Ctrl+C to stop the bot")
