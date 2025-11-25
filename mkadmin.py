@@ -6,7 +6,7 @@ from datetime import datetime, timedelta
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
 from telegram.ext import ContextTypes
 from telegram.ext import MessageHandler, filters
-
+import asyncio 
 OWNER_ID = 5373577888
 
 ADMINS_FILE = "admins.json"
@@ -590,11 +590,17 @@ async def admin_panel_callback(update: Update, context: ContextTypes.DEFAULT_TYP
     # Expiry: "Okay!"
     # --------------------
     if data == "expired_okay":
-        await query.answer("Thank you!", show_alert=True)
+        await query.answer("Thank you! For using our bot please give us feedback to improve our bot", show_alert=True)
         await asyncio.sleep(0.007)
         await query.message.delete()
         return
 
+    if data == "admin_okay":
+        await query.answer("Congratulations 🎉 you have now access to our bot", show_alert=True)
+        await asyncio.sleep(0.007)
+        await query.message.delete()
+        return
+        
     # --------------------
     # Expiry: Feedback
     # --------------------
