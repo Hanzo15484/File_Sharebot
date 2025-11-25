@@ -3,18 +3,14 @@ import asyncio
 from datetime import datetime
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import ContextTypes, CommandHandler, MessageHandler, filters
+from permission import CheckBotAdmin
 
 # Import shared functions
 from shared_functions import load_admins, load_settings, load_links, save_links, encode_file_id, decode_file_id
 
+@CheckBotAdmin()
 async def batchlink_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = update.effective_user.id
-    admins = load_admins()
-    
-    # Check if user is admin or owner
-    if user_id not in admins and user_id != 5373577888:
-        await update.message.reply_text("You are not authorized to use this command!")
-        return
     
     await update.message.reply_text(
         "📌 ᴘʟᴇᴀsᴇ ғᴏʀᴡᴀʀᴅ ᴛʜᴇ ғɪʀsᴛ ᴍᴇssᴀɢᴇ ғʀᴏᴍ ʏᴏᴜʀ ʙᴀᴛᴄʜ ᴄʜᴀɴɴᴇʟ (ᴡɪᴛʜ ғᴏʀᴡᴀʀᴅ ᴛᴀɢ)\n"
@@ -23,13 +19,9 @@ async def batchlink_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     
     context.user_data['batch_state'] = 'waiting_first_message'
 
+@CheckBotAdmin()
 async def batch_message_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = update.effective_user.id
-    admins = load_admins()
-    
-    # Check if user is admin or owner
-    if user_id not in admins and user_id != 5373577888:
-        return
     
     # Check if we're in force sub mode first (priority to force sub)
     if context.user_data.get('waiting_for_channel'):
@@ -151,6 +143,7 @@ async def extract_chat_message_info(update: Update, context: ContextTypes.DEFAUL
 
     print("❌ Could not extract chat and message ID")
     return None, None, None
+    
 async def check_bot_admin(context, chat_id):
     """Check if bot is admin in the channel"""
     try:
