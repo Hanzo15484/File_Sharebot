@@ -182,6 +182,7 @@ def main():
     group=0)
 
     register_mkadmin_handlers(application)
+
     async def periodic_admin_checks(context):
         cleanup_expired_admins()
         await notify_expiring_admins(context)
