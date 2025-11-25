@@ -20,6 +20,9 @@ from shortened import shortener_handler, shortlink_handler, shortener_button_han
 from ping import ping_command
 from stats import stats_command
 from alive import alive_command
+from mkadmin import register_mkadmin_handlers, cleanup_expired_admins, notify_expiring_admins
+
+from shared_functions import ensure_admin_files_exist
 # Set up logging
 logging.basicConfig(
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
@@ -70,7 +73,8 @@ def main():
     # Load JSON files
     print("Initializing JSON files...")
     load_json_files()
-    
+    # Ensure admin-related files exist
+    ensure_admin_files_exist()
     # Get bot token from environment variable
     load_dotenv("Bot_Token.env")
     TOKEN = os.getenv('BOT_TOKEN')
@@ -176,7 +180,8 @@ def main():
     # For handling text updates (start/help/db channel)
     application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, settings_message_handler),
     group=0)
-    
+
+    register_mkadmin_handlers(application)
     # Error handler
     async def error_handler(update: object, context):
         logging.error(f"Exception while handling an update: {context.error}")
@@ -212,6 +217,16 @@ def main():
         print(f"   ID: {bot_info.id}")
     except Exception as e:
         print(f"   Could not fetch bot info: {e}")
+    # Schedule admin expiry checks every 30 minutes
+async def periodic_admin_checks(context):
+    cleanup_expired_admins()
+    await notify_expiring_admins(context)
+
+# Run job queue
+try:
+    application.job_queue.run_repeating(periodic_admin_checks, interval=1800, first=10)
+except Exception as e:
+    print(f"Job queue failed: {e}")
     
     # Check for required files
     print(f"\n📁 File check:")
@@ -223,7 +238,8 @@ def main():
     # Start the bot
     print(f"\n🚀 Starting bot...")
     print("Press Ctrl+C to stop the bot")
-    
+    # Initial cleanup
+    cleanup_expired_admins()
     try:
         application.run_polling()
     except KeyboardInterrupt:
