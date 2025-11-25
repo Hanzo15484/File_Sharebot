@@ -120,3 +120,177 @@ def auto_add_user(user_id, username, first_name, last_name=None):
 def is_user_banned(user_id):
     banned_users = load_banned_users()
     return any(user['id'] == user_id for user in banned_users)
+
+ADMINS_FILE = "admins.json"
+NOTIFIED_FILE = "expiry_notified.json"
+
+
+def read_json(path, default):
+    try:
+        with open(path, "r", encoding="utf-8") as f:
+            return json.load(f)
+    except:
+        return default
+
+
+def write_json(path, data):
+    with open(path, "w", encoding="utf-8") as f:
+        json.dump(data, f, indent=4)
+
+
+def ensure_admin_system():
+    if not os.path.exists(ADMINS_FILE):
+        write_json(ADMINS_FILE, {"admins": [5373577888], "expiry": {}})
+
+    if not os.path.exists(NOTIFIED_FILE):
+        write_json(NOTIFIED_FILE, {})
+
+
+def load_admins_full():
+    data = read_json(ADMINS_FILE, {"admins": [5373577888], "expiry": {}})
+
+    if "admins" not in data:
+        data["admins"] = [5373577888]
+
+    if "expiry" not in data:
+        data["expiry"] = {}
+
+    return data
+
+
+def save_admins_full(data):
+    write_json(ADMINS_FILE, data)
+
+
+def load_notified():
+    return read_json(NOTIFIED_FILE, {})
+
+
+def save_notified(data):
+    write_json(NOTIFIED_FILE, data)
+
+
+def is_admin(user_id):
+    data = load_admins_full()
+    return user_id in data["admins"]
+
+
+def add_admin(user_id, duration):
+    data = load_admins_full()
+
+    if user_id not in data["admins"]:
+        data["admins"].append(user_id)
+
+    if duration:
+        expiry_time = (datetime.utcnow() + duration).isoformat()
+        data["expiry"][str(user_id)] = expiry_time
+    else:
+        if str(user_id) in data["expiry"]:
+            data["expiry"].pop(str(user_id))
+
+    save_admins_full(data)
+    return True
+
+
+def remove_admin(user_id):
+    data = load_admins_full()
+
+    if user_id in data["admins"]:
+        data["admins"].remove(user_id)
+
+    if str(user_id) in data["expiry"]:
+        data["expiry"].pop(str(user_id))
+
+    save_admins_full(data)
+    return True
+
+
+def cleanup_expired_admins():
+    data = load_admins_full()
+    expiry = data["expiry"]
+    notified = load_notified()
+
+    now = datetime.utcnow()
+    expired = []
+
+    for uid, timestamp in list(expiry.items()):
+        exp_time = datetime.fromisoformat(timestamp)
+
+        if now >= exp_time:
+            expired.append(int(uid))
+
+            if int(uid) in data["admins"]:
+                data["admins"].remove(int(uid))
+
+            expiry.pop(uid, None)
+            notified.pop(uid, None)
+
+    data["expiry"] = expiry
+    save_admins_full(data)
+    save_notified(notified)
+
+    return expired
+
+
+def parse_duration(duration_str):
+    if not duration_str:
+        return None
+
+    duration_str = duration_str.lower()
+
+    try:
+        if duration_str.endswith("d"):
+            return timedelta(days=int(duration_str[:-1]))
+
+        if duration_str.endswith("m"):
+            return timedelta(days=int(duration_str[:-1]) * 30)
+
+        if duration_str.endswith("y"):
+            return timedelta(days=int(duration_str[:-1]) * 365)
+
+        if duration_str.endswith("h"):
+            return timedelta(hours=int(duration_str[:-1]))
+
+        if duration_str.endswith("min"):
+            return timedelta(minutes=int(duration_str[:-3]))
+
+        return None
+    except:
+        return None
+
+
+def get_expiry(user_id):
+    data = load_admins_full()
+    expiry_map = data["expiry"]
+
+    timestamp = expiry_map.get(str(user_id))
+    if not timestamp:
+        return None
+
+    return datetime.fromisoformat(timestamp)
+
+
+def get_remaining(user_id):
+    expiry = get_expiry(user_id)
+    if not expiry:
+        return None
+
+    return expiry - datetime.utcnow()
+
+
+def get_notification_stage(user_id):
+    notified = load_notified()
+    return notified.get(str(user_id))
+
+
+def set_notification_stage(user_id, stage):
+    notified = load_notified()
+    notified[str(user_id)] = stage
+    save_notified(notified)
+
+
+def clear_notification(user_id):
+    notified = load_notified()
+    if str(user_id) in notified:
+        notified.pop(str(user_id))
+        save_notified(notified)
