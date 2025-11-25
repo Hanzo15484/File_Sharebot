@@ -1,7 +1,7 @@
 # permissions.py
 
 from functools import wraps
-from admin_system import load_admins_full, cleanup_expired_admins
+from shared_functions import load_admins_full, cleanup_expired_admins
 from telegram import Update
 from telegram.ext import ContextTypes
 
