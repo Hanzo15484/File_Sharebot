@@ -591,7 +591,7 @@ async def admin_panel_callback(update: Update, context: ContextTypes.DEFAULT_TYP
     # --------------------
     if data == "expired_okay":
         await query.answer("Thank you! For using our bot please give us feedback to improve our bot", show_alert=True)
-        await asyncio.sleep(0.007)
+        await asyncio.sleep(10)
         await query.message.delete()
         return
 
