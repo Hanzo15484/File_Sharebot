@@ -663,4 +663,5 @@ def register_mkadmin_handlers(app):
     app.add_handler(CallbackQueryHandler(admin_panel_callback, pattern="^close_msg$"))
 
     # feedback messages
-    app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, feedback_text_handler))
+    app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, feedback_text_handler), 
+    group=30)
