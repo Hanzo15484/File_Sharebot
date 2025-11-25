@@ -56,11 +56,6 @@ def decode_file_id(encoded_id):
 @CheckBotAdmin()
 async def genlink_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = update.effective_user.id
-    
-    # Only admin can use command
-    """if user_id not in admins and user_id != 5373577888:
-        await update.message.reply_text("You are not authorized!")
-        return"""
 
     # Set waiting mode
     context.user_data["waiting_for_genlink"] = True
