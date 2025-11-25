@@ -473,7 +473,6 @@ async def admin_panel(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def admin_panel_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
     data = query.data
-    await query.answer()
 
     d = load_admins_full()
     admins = d["admins"]
@@ -592,6 +591,8 @@ async def admin_panel_callback(update: Update, context: ContextTypes.DEFAULT_TYP
     # --------------------
     if data == "expired_okay":
         await query.answer("Thank you!", show_alert=True)
+        await asyncio.sleep(0.007)
+        await query.message.delete()
         return
 
     # --------------------
