@@ -1,6 +1,7 @@
 import json
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import ContextTypes
+from permission import CheckBotAdmin
 
 # Load admin data
 def load_admins():
