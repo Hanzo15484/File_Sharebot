@@ -221,7 +221,7 @@ def main():
     print("   - Force_Sub checked ✅")
     # Get bot info
     try:
-        bot_info = application.bot.get_me()
+        bot_info = await application.bot.get_me()
         print(f"\n🤖 Bot Info:")
         print(f"   Name: {bot_info.first_name}")
         print(f"   Username: @{bot_info.username}")
