@@ -9,6 +9,8 @@ from batch_link import handle_batch_start
 from force_sub import check_force_subscription
 from middleware import check_ban_and_register
 from shortened import load_shortener, shorten_url
+from permission import CheckBotAdmin
+
 # Load settings
 def load_settings():
     try:
@@ -51,6 +53,7 @@ def decode_file_id(encoded_id):
         return None
         
 @check_ban_and_register
+@CheckBotAdmin()
 async def genlink_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = update.effective_user.id
     admins = load_admins()
@@ -114,6 +117,7 @@ async def genlink_countdown(context):
         pass
 
 @check_ban_and_register
+@CheckBotAdmin()
 async def genlink_next_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     # If not in genlink waiting mode → ignore
@@ -174,6 +178,7 @@ async def genlink_next_message(update: Update, context: ContextTypes.DEFAULT_TYP
 )
     
 @check_ban_and_register
+@CheckBotAdmin()
 async def start_link_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = update.effective_user.id
     args = context.args
