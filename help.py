@@ -24,12 +24,6 @@ def load_settings():
 @CheckBotAdmin()
 async def help_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = update.effective_user.id
-    admins = load_admins()
-    
-    # Check if user is admin or owner
-    if user_id not in admins and user_id != 5373577888:  # Owner ID
-        await update.message.reply_text("You are not authorized to use this command!")
-        return
     
     settings = load_settings()
     help_text = settings.get("help_text", 
