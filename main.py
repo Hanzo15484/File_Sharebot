@@ -182,6 +182,16 @@ def main():
     group=0)
 
     register_mkadmin_handlers(application)
+    async def periodic_admin_checks(context):
+        cleanup_expired_admins()
+        await notify_expiring_admins(context)
+
+    try:
+        application.job_queue.run_repeating(periodic_admin_checks, interval=1800, first=10)
+        print("⏱ Scheduled admin expiry checks (every 30 minutes)")
+    except Exception as e:
+        print(f"❌ Job queue failed: {e}")
+                                            
     # Error handler
     async def error_handler(update: object, context):
         logging.error(f"Exception while handling an update: {context.error}")
@@ -217,16 +227,7 @@ def main():
         print(f"   ID: {bot_info.id}")
     except Exception as e:
         print(f"   Could not fetch bot info: {e}")
-    # Schedule admin expiry checks every 30 minutes
-async def periodic_admin_checks(context):
-    cleanup_expired_admins()
-    await notify_expiring_admins(context)
 
-# Run job queue
-try:
-    application.job_queue.run_repeating(periodic_admin_checks, interval=1800, first=10)
-except Exception as e:
-    print(f"Job queue failed: {e}")
     
     # Check for required files
     print(f"\n📁 File check:")
@@ -234,12 +235,12 @@ except Exception as e:
         print("   ✅ img.jpg found")
     else:
         print("   ⚠️  img.jpg not found (bot will use text-only messages)")
-    
+        
+    cleanup_expired_admins()
     # Start the bot
     print(f"\n🚀 Starting bot...")
     print("Press Ctrl+C to stop the bot")
-    # Initial cleanup
-    cleanup_expired_admins()
+    
     try:
         application.run_polling()
     except KeyboardInterrupt:
