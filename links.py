@@ -111,7 +111,6 @@ async def genlink_countdown(context):
         pass
 
 @check_ban_and_register
-@CheckBotAdmin()
 async def genlink_next_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     # If not in genlink waiting mode → ignore
