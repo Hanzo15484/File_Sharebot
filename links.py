@@ -172,7 +172,6 @@ async def genlink_next_message(update: Update, context: ContextTypes.DEFAULT_TYP
 )
     
 @check_ban_and_register
-@CheckBotAdmin()
 async def start_link_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = update.effective_user.id
     args = context.args
