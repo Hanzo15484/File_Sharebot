@@ -86,7 +86,7 @@ def _reply_not_authorized(update: Update):
 
         try:
             if update.message:
-                await update.message.reply_text("You are not authorized to use this command!")
+                print("You are not authorized to use this command!")
                 return
         except Exception:
             pass
