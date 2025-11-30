@@ -471,8 +471,10 @@ async def settings_button_handler(update: Update, context: ContextTypes.DEFAULT_
 
     # CLOSE BUTTON
     elif data == "settings_close":
+        await query.answer("❌ ᴄʟᴏsᴇᴅ", show_alert=False)
+        await asyncio.sleep(0.007)
         await query.message.delete()
-            
+        
 async def settings_message_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = update.effective_user.id
     admins = load_admins()
