@@ -327,7 +327,7 @@ async def settings_button_handler(update: Update, context: ContextTypes.DEFAULT_
         off_text = "✅ ᴏғғ" if not protect_content else "ᴏғғ"
 
         keyboard = [
-            [InlineKeyboardButton("ғᴏʀᴡᴀʀᴅ", callback_data="protect_forward")],
+            [InlineKeyboardButton("ᴘʀᴏᴛᴇᴄᴛ ᴄᴏɴᴛᴇɴᴛ", callback_data="protect_forward")],
             [
                 InlineKeyboardButton(on_text, callback_data="protect_on"),
                 InlineKeyboardButton(off_text, callback_data="protect_off")
@@ -343,7 +343,7 @@ async def settings_button_handler(update: Update, context: ContextTypes.DEFAULT_
         )
         await asyncio.sleep(0.3)
         await query.edit_message_caption(
-            f"🔒 **Protect Content Settings**\n\nCurrent status: {status}\n\nSelect forwarding option:",
+            f"🔒 **Protect Content Settings**\n\nCurrent status: {status}\n\nSelect Protect Content option:",
             reply_markup=InlineKeyboardMarkup(keyboard),
             parse_mode="MarkdownV2"
         )
