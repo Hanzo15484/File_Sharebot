@@ -402,12 +402,12 @@ async def settings_button_handler(update: Update, context: ContextTypes.DEFAULT_
             save_settings(settings)
             await query.answer("Protect content disabled!", show_alert=False)
             await show_updated_protect_menu(query, False)
-
-    elif data == "protect_forward":
-       await query.answer(
-         "ᴄʟɪᴄᴋ ᴏɴ 'ᴏɴ' ɪғ ʏᴏᴜ ᴡᴀɴᴛ ᴛᴏ ᴅɪsᴀʙʟᴇ ғᴏʀᴡᴀʀᴅɪɴɢ ᴀɴᴅ ᴄᴏᴘʏ ᴏᴘᴛɪᴏɴ ᴇʟsᴇ ᴄʟɪᴄᴋ ᴏɴ 'ᴏғғ'",
-         show_alert=True
-      )
+        elif data == "protect_forward":
+            await query.answer(
+                "ᴄʟɪᴄᴋ ᴏɴ 'ᴏɴ' ɪғ ʏᴏᴜ ᴡᴀɴᴛ ᴛᴏ ᴅɪsᴀʙʟᴇ ғᴏʀᴡᴀʀᴅɪɴɢ ᴀɴᴅ ᴄᴏᴘʏ ᴏᴘᴛɪᴏɴ ᴇʟsᴇ ᴄʟɪᴄᴋ ᴏɴ 'ᴏғғ'",
+                show_alert=True
+            )
+            
     # BACK BUTTON
     elif data == "settings_back":
         settings = load_settings()
