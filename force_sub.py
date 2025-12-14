@@ -290,8 +290,13 @@ async def check_force_subscription(
         await asyncio.sleep(0.3)
         await temp_msg.edit_text("ᴠᴇʀɪғɪᴇᴅ ✅")
         await asyncio.sleep(0.4)
-        await temp_msg.edit_text("ᴘ
-
+        await temp_msg.edit_text("ᴘʟᴇᴀsᴇ ᴡᴀɪᴛ....")
+        await asyncio.sleep(0.3)
+        await temp_msg.delete()
+    except Exception as e:
+        print(f"Error in deleting message: {e}")
+        return True
+    
 async def send_force_sub_message(update: Update, context: ContextTypes.DEFAULT_TYPE, channels):
     settings = load_settings()
     force_sub_image = settings.get("force_sub_image", "")
