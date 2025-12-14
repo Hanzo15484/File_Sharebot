@@ -274,11 +274,8 @@ async def check_force_subscription(
                 continue
 
         except Exception:
-            # 🔥 Telegram throws error for pending join request
-            if mode == "request":
-                continue
             unsubscribed_channels.append(channel)
-
+            continue 
     # ❌ Still not verified
     if unsubscribed_channels:
         await asyncio.sleep(0.5)
@@ -327,7 +324,8 @@ async def send_force_sub_message(
 
         try:
             member = await context.bot.get_chat_member(channel_id, user_id)
-
+            status = member.status
+            
             # ❌ Skip already joined channels
             if status in ("member", "administrator", "creator"):
                 continue
