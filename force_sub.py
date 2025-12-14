@@ -153,56 +153,59 @@ async def force_sub_button_handler(update: Update, context: ContextTypes.DEFAULT
 
 async def forwarded_channel_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = update.effective_user.id
-    admins = load_admins()
 
-    # Admin check
-    if user_id not in admins and user_id != 5373577888:
+    if not is_admin(user_id):
         return
 
-    # Only when waiting for force-sub input
-    if not context.user_data.get('waiting_fsub'):
+    if not context.user_data.get("waiting_fsub"):
         return
 
     message = update.message
     if not message or not message.forward_origin:
-        await message.reply_text("⚠️ Please forward a channel message.")
-        return
+        return await message.reply_text("⚠️ Forward a channel message.")
 
     origin = message.forward_origin
-
-    # Must be forwarded from a channel
     if origin.type != "channel":
-        await message.reply_text("⚠️ This is not a channel message.")
-        return
+        return await message.reply_text("⚠️ This is not a channel message.")
 
     chat = origin.chat
     channel_id = chat.id
     channel_title = chat.title
 
-    # Verify bot admin status
+    # ✅ BOT MUST BE ADMIN
     try:
         member = await context.bot.get_chat_member(channel_id, context.bot.id)
         if member.status not in ("administrator", "creator"):
-            await message.reply_text(
-                "❌ Bot must be admin in this channel to use force subscribe."
+            return await message.reply_text(
+                "❌ Bot must be admin in this channel."
             )
-            return
-    except Exception:
-        await message.reply_text("❌ Unable to verify bot permissions.")
-        return
+    except Exception as e:
+        return await message.reply_text("❌ Cannot verify bot permissions.")
 
     channels = load_force_sub()
-
-    # Prevent duplicates
     if any(c["id"] == channel_id for c in channels):
-        await message.reply_text("❌ This channel is already added.")
-        return
+        return await message.reply_text("❌ Channel already added.")
 
-    # ✅ Store ONLY safe data
+    # 🔥 CREATE INVITE LINK (THIS IS THE KEY)
+    try:
+        invite = await context.bot.create_chat_invite_link(
+            chat_id=channel_id,
+            name=f"ForceSub_{channel_title}",
+            creates_join_request=False
+        )
+        invite_link = invite.invite_link
+    except Exception as e:
+        return await message.reply_text(
+            "❌ Failed to create invite link.\n"
+            "Make sure the bot has **Invite Users** permission."
+        )
+
+    # SAVE CHANNEL
     context.user_data["pending_channel"] = {
         "id": channel_id,
         "title": channel_title,
-        "username": chat.username,  # None if private
+        "username": chat.username,
+        "invite_link": invite_link,
         "added_by": user_id
     }
 
@@ -219,7 +222,7 @@ async def forwarded_channel_handler(update: Update, context: ContextTypes.DEFAUL
             ]
         ]),
         parse_mode="Markdown"
-    )
+        )
 # Force subscription check function
 async def check_force_subscription(update: Update, context: ContextTypes.DEFAULT_TYPE, user_id: int):
     channels = load_force_sub()
