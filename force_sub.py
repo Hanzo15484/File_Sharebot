@@ -268,7 +268,7 @@ async def check_force_subscription(
 
             # ✅ Request mode → allow member / restricted
             if mode == "request":
-                if member.is_member or member.status in ("restricted", "administrator", "creator"):
+                if status in ("member", "restricted", "administrator", "creator"):
                     continue
                 unsubscribed_channels.append(channel)
                 continue
