@@ -261,7 +261,7 @@ async def check_force_subscription(
 
             # ✅ Normal mode → must be member
             if mode == "normal":
-                if member.is_member or member.status in ("administrator", "creator"):
+                if status in ("member", "administrator", "creator"):
                     continue
                 unsubscribed_channels.append(channel)
                 continue
@@ -329,7 +329,7 @@ async def send_force_sub_message(
             member = await context.bot.get_chat_member(channel_id, user_id)
 
             # ❌ Skip already joined channels
-            if member.is_member or member.status in ("administrator", "creator"):
+            if status in ("member", "administrator", "creator"):
                 continue
 
         except Exception:
