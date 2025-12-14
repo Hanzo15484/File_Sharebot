@@ -126,26 +126,40 @@ async def force_sub_button_handler(update: Update, context: ContextTypes.DEFAULT
         save_force_sub(channels)
         await render_fsub_menu(query.message, context)
 
-    elif data == "fsub_mode_normal":
-        ch = context.user_data.pop("pending_channel")
-        ch["mode"] = "normal"
-        save_force_sub(load_force_sub() + [ch])
-        context.user_data.clear()
-        await render_fsub_menu(query.message, context)
+    elif data in ("fsub_mode_normal", "fsub_mode_request"):
+    ch = context.user_data.pop("pending_channel")
 
-    elif data == "fsub_mode_request":
-        ch = context.user_data.pop("pending_channel")
-        ch["mode"] = "request"
-        ch["status"] = "pending"
-        save_force_sub(load_force_sub() + [ch])
-        context.user_data.clear()
+    is_request_mode = (data == "fsub_mode_request")
 
+    try:
+        invite = await context.bot.create_chat_invite_link(
+            chat_id=ch["id"],
+            name=f"ForceSub_{ch['title']}",
+            creates_join_request=is_request_mode
+        )
+    except Exception:
+        return await query.answer(
+            "❌ Failed to create invite link.\n"
+            "Make sure bot has Invite Users permission.",
+            show_alert=True
+        )
+
+    ch["invite_link"] = invite.invite_link
+    ch["mode"] = "request" if is_request_mode else "normal"
+
+    save_force_sub(load_force_sub() + [ch])
+    context.user_data.clear()
+
+    if is_request_mode:
         await query.edit_message_text(
             "🕓 **Request mode enabled**\nAdmin approval required.",
             reply_markup=InlineKeyboardMarkup([
                 [InlineKeyboardButton("🔙 Back", callback_data="fsub_back")]
-            ])
+            ]),
+            parse_mode="Markdown"
         )
+    else:
+        await render_fsub_menu(query.message, context)
 
 # ─────────────────────────────────────────────
 # Forwarded Channel Handler
@@ -186,26 +200,12 @@ async def forwarded_channel_handler(update: Update, context: ContextTypes.DEFAUL
     if any(c["id"] == channel_id for c in channels):
         return await message.reply_text("❌ Channel already added.")
 
-    # 🔥 CREATE INVITE LINK (THIS IS THE KEY)
-    try:
-        invite = await context.bot.create_chat_invite_link(
-            chat_id=channel_id,
-            name=f"ForceSub_{channel_title}",
-            creates_join_request=False
-        )
-        invite_link = invite.invite_link
-    except Exception as e:
-        return await message.reply_text(
-            "❌ Failed to create invite link.\n"
-            "Make sure the bot has **Invite Users** permission."
-        )
 
     # SAVE CHANNEL
     context.user_data["pending_channel"] = {
         "id": channel_id,
         "title": channel_title,
         "username": chat.username,
-        "invite_link": invite_link,
         "added_by": user_id
     }
 
