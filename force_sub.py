@@ -222,35 +222,55 @@ async def forwarded_channel_handler(update: Update, context: ContextTypes.DEFAUL
         ]),
         parse_mode="Markdown"
         )
-# Force subscription check function
-async def check_force_subscription(update: Update, context: ContextTypes.DEFAULT_TYPE, user_id: int):
-    channels = load_force_sub()
     
+# Force subscription check function
+async def check_force_subscription(
+    update: Update,
+    context: ContextTypes.DEFAULT_TYPE,
+    user_id: int
+):
+    channels = load_force_sub()
+
     if not channels:
         return True  # No force sub required
 
-    temp_msg = await update.message.reply_text("ᴄʜᴇᴄᴋɪɴɢ sᴜʙsᴄʀɪᴘᴛɪᴏɴ....")
+    temp_msg = await update.message.reply_text(
+        "ᴄʜᴇᴄᴋɪɴɢ sᴜʙsᴄʀɪᴘᴛɪᴏɴ...."
+    )
+
     unsubscribed_channels = []
 
     for channel in channels:
-        channel_id = channel['id']
+        channel_id = channel["id"]
+        mode = channel.get("mode", "normal")  # normal / request
+
         try:
             chat_member = await context.bot.get_chat_member(channel_id, user_id)
-            if chat_member.status in ['left', 'kicked']:
+
+            # ❌ User not joined at all
+            if chat_member.status in ("left", "kicked"):
                 unsubscribed_channels.append(channel)
+
+            # ✅ request mode: restricted (pending) is allowed
+            # ✅ normal mode: member is allowed
+
         except Exception as e:
             print(f"Error checking subscription for channel {channel_id}: {e}")
             unsubscribed_channels.append(channel)
 
-    # ↓↓↓ Everything below must stay indented INSIDE the async function ↓↓↓
+    # ❌ Not verified → send force-sub message
     if unsubscribed_channels:
         await asyncio.sleep(0.5)
-        await temp_msg.edit_text("❌ ɴᴏᴛ ᴠᴇʀɪғɪᴇᴅ! ᴘʟᴇᴀsᴇ ᴊᴏɪɴ ᴀʟʟ ᴄʜᴀɴɴᴇʟs ᴛᴏ ᴄᴏɴᴛɪɴᴜᴇ")
+        await temp_msg.edit_text(
+            "❌ ɴᴏᴛ ᴠᴇʀɪғɪᴇᴅ!\n"
+            "ᴘʟᴇᴀsᴇ ᴊᴏɪɴ ᴀʟʟ ᴄʜᴀɴɴᴇʟs ᴛᴏ ᴄᴏɴᴛɪɴᴜᴇ"
+        )
         await asyncio.sleep(0.6)
         await temp_msg.delete()
         await send_force_sub_message(update, context, unsubscribed_channels)
         return False
 
+    # ✅ Verified
     try:
         await asyncio.sleep(0.3)
         await temp_msg.edit_text("ᴠᴇʀɪғɪᴇᴅ ✅")
@@ -259,7 +279,7 @@ async def check_force_subscription(update: Update, context: ContextTypes.DEFAULT
         await asyncio.sleep(0.5)
         await temp_msg.delete()
     except Exception as e:
-        print(f"Error in deleting fsub message: {e}")
+        print(f"Error cleaning up fsub message: {e}")
 
     return True
 
