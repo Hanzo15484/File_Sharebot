@@ -127,40 +127,39 @@ async def force_sub_button_handler(update: Update, context: ContextTypes.DEFAULT
         await render_fsub_menu(query.message, context)
 
     elif data in ("fsub_mode_normal", "fsub_mode_request"):
-    ch = context.user_data.pop("pending_channel")
+        ch = context.user_data.pop("pending_channel")
 
-    is_request_mode = (data == "fsub_mode_request")
+        is_request_mode = (data == "fsub_mode_request")
 
-    try:
-        invite = await context.bot.create_chat_invite_link(
-            chat_id=ch["id"],
-            name=f"ForceSub_{ch['title']}",
-            creates_join_request=is_request_mode
-        )
-    except Exception:
-        return await query.answer(
-            "❌ Failed to create invite link.\n"
-            "Make sure bot has Invite Users permission.",
-            show_alert=True
-        )
+        try:
+            invite = await context.bot.create_chat_invite_link(
+                chat_id=ch["id"],
+                name=f"ForceSub_{ch['title']}",
+                creates_join_request=is_request_mode
+            )
+        except Exception:
+            return await query.answer(
+                "❌ Failed to create invite link.\n"
+                "Make sure bot has Invite Users permission.",
+                show_alert=True
+            )
 
-    ch["invite_link"] = invite.invite_link
-    ch["mode"] = "request" if is_request_mode else "normal"
+        ch["invite_link"] = invite.invite_link
+        ch["mode"] = "request" if is_request_mode else "normal"
 
-    save_force_sub(load_force_sub() + [ch])
-    context.user_data.clear()
+        save_force_sub(load_force_sub() + [ch])
+        context.user_data.clear()
 
-    if is_request_mode:
-        await query.edit_message_text(
-            "🕓 **Request mode enabled**\nAdmin approval required.",
-            reply_markup=InlineKeyboardMarkup([
-                [InlineKeyboardButton("🔙 Back", callback_data="fsub_back")]
-            ]),
-            parse_mode="Markdown"
-        )
-    else:
-        await render_fsub_menu(query.message, context)
-
+        if is_request_mode:
+            await query.edit_message_text(
+                "🕓 **Request mode enabled**\nAdmin approval required.",
+                reply_markup=InlineKeyboardMarkup([
+                    [InlineKeyboardButton("🔙 Back", callback_data="fsub_back")]
+                ]),
+                parse_mode="Markdown"
+            )
+        else:
+            await render_fsub_menu(query.message, context)
 # ─────────────────────────────────────────────
 # Forwarded Channel Handler
 # ─────────────────────────────────────────────
