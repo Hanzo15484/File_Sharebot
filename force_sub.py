@@ -242,24 +242,32 @@ async def check_force_subscription(
 
     for channel in channels:
         channel_id = channel["id"]
-        mode = channel.get("mode", "normal")  # normal / request
+        mode = channel.get("mode", "normal")
 
         try:
             member = await context.bot.get_chat_member(channel_id, user_id)
+            status = member.status
 
-            # 🚫 Always block if left or kicked
-            if member.status in ("left", "kicked"):
+            # 🚫 Always fail if left or kicked
+            if status in ("left", "kicked"):
                 unsubscribed_channels.append(channel)
                 continue
 
-            # 🚫 Normal mode: must be fully joined
-            if mode == "normal" and member.status != "member":
-                unsubscribed_channels.append(channel)
-                continue
+            # ✅ NORMAL MODE → must be member
+            if mode == "normal":
+                if status == "member":
+                    continue
+                else:
+                    unsubscribed_channels.append(channel)
+                    continue
 
-            # ✅ Request mode: restricted (pending) OR member is OK
-            if mode == "request" and member.status in ("member", "restricted"):
-                continue
+            # ✅ REQUEST MODE → member OR restricted is OK
+            if mode == "request":
+                if status in ("member", "restricted"):
+                    continue
+                else:
+                    unsubscribed_channels.append(channel)
+                    continue
 
         except Exception as e:
             print(f"Error checking subscription for {channel_id}: {e}")
@@ -282,13 +290,7 @@ async def check_force_subscription(
         await asyncio.sleep(0.3)
         await temp_msg.edit_text("ᴠᴇʀɪғɪᴇᴅ ✅")
         await asyncio.sleep(0.4)
-        await temp_msg.edit_text("ᴘʟᴇᴀsᴇ ᴡᴀɪᴛ....")
-        await asyncio.sleep(0.5)
-        await temp_msg.delete()
-    except Exception as e:
-        print(f"Error cleaning fsub message: {e}")
-
-    return True
+        await temp_msg.edit_text("ᴘ
 
 async def send_force_sub_message(update: Update, context: ContextTypes.DEFAULT_TYPE, channels):
     settings = load_settings()
