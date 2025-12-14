@@ -232,7 +232,7 @@ async def check_force_subscription(
     channels = load_force_sub()
 
     if not channels:
-        return True  # No force sub required
+        return True
 
     temp_msg = await update.message.reply_text(
         "ᴄʜᴇᴄᴋɪɴɢ sᴜʙsᴄʀɪᴘᴛɪᴏɴ...."
@@ -245,20 +245,27 @@ async def check_force_subscription(
         mode = channel.get("mode", "normal")  # normal / request
 
         try:
-            chat_member = await context.bot.get_chat_member(channel_id, user_id)
+            member = await context.bot.get_chat_member(channel_id, user_id)
 
-            # ❌ User not joined at all
-            if chat_member.status in ("left", "kicked"):
+            # 🚫 Always block if left or kicked
+            if member.status in ("left", "kicked"):
                 unsubscribed_channels.append(channel)
+                continue
 
-            # ✅ request mode: restricted (pending) is allowed
-            # ✅ normal mode: member is allowed
+            # 🚫 Normal mode: must be fully joined
+            if mode == "normal" and member.status != "member":
+                unsubscribed_channels.append(channel)
+                continue
+
+            # ✅ Request mode: restricted (pending) OR member is OK
+            if mode == "request" and member.status in ("member", "restricted"):
+                continue
 
         except Exception as e:
-            print(f"Error checking subscription for channel {channel_id}: {e}")
+            print(f"Error checking subscription for {channel_id}: {e}")
             unsubscribed_channels.append(channel)
 
-    # ❌ Not verified → send force-sub message
+    # ❌ Not verified
     if unsubscribed_channels:
         await asyncio.sleep(0.5)
         await temp_msg.edit_text(
@@ -279,7 +286,7 @@ async def check_force_subscription(
         await asyncio.sleep(0.5)
         await temp_msg.delete()
     except Exception as e:
-        print(f"Error cleaning up fsub message: {e}")
+        print(f"Error cleaning fsub message: {e}")
 
     return True
 
