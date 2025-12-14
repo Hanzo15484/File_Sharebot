@@ -136,7 +136,7 @@ def main():
     # Batch_Link module callbacks
     # Message handlers - order matters!
     application.add_handler(MessageHandler(filters.FORWARDED, forwarded_channel_handler),
-    group=1)  # Force sub first
+    group=0)  # Force sub first
     application.add_handler(MessageHandler(filters.TEXT | filters.FORWARDED, batch_message_handler),
     group=2)  # Batch second
     application.add_handler(CallbackQueryHandler(batch_button_handler, pattern="^copy_batch_"))
