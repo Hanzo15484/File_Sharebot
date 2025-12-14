@@ -248,29 +248,33 @@ async def check_force_subscription(
             member = await context.bot.get_chat_member(channel_id, user_id)
             status = member.status
 
-            # 🚫 Always fail if left or kicked
+            # ❌ Always fail if left or kicked
             if status in ("left", "kicked"):
                 unsubscribed_channels.append(channel)
                 continue
 
-            # ✅ NORMAL MODE → must be member
+            # ✅ Normal mode → must be member
             if mode == "normal":
                 if status == "member":
                     continue
-                else:
-                    unsubscribed_channels.append(channel)
-                    continue
+                unsubscribed_channels.append(channel)
+                continue
 
-            # ✅ REQUEST MODE → member OR restricted is OK
+            # ✅ Request mode → member OR pending request is OK
             if mode == "request":
                 if status in ("member", "restricted"):
                     continue
-                else:
-                    unsubscribed_channels.append(channel)
-                    continue
+                unsubscribed_channels.append(channel)
+                continue
 
         except Exception as e:
             print(f"Error checking subscription for {channel_id}: {e}")
+
+            # 🔥 CRITICAL FIX:
+            # In request mode, Telegram throws exception for pending join request
+            if mode == "request":
+                continue  # allow pending request
+
             unsubscribed_channels.append(channel)
 
     # ❌ Not verified
@@ -294,8 +298,10 @@ async def check_force_subscription(
         await asyncio.sleep(0.3)
         await temp_msg.delete()
     except Exception as e:
-        print(f"Error in deleting message: {e}")
-        return True
+        print(f"Error cleaning message: {e}")
+
+    return True
+
     
 async def send_force_sub_message(update: Update, context: ContextTypes.DEFAULT_TYPE, channels):
     settings = load_settings()
