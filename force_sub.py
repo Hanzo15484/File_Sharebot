@@ -152,34 +152,61 @@ async def force_sub_button_handler(update: Update, context: ContextTypes.DEFAULT
 # ─────────────────────────────────────────────
 
 async def forwarded_channel_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    if not context.user_data.get("waiting_fsub"):
+    user_id = update.effective_user.id
+    admins = load_admins()
+
+    # Admin check
+    if user_id not in admins and user_id != 5373577888:
         return
 
-    msg = update.message
-    origin = msg.forward_origin
+    # Only when waiting for force-sub input
+    if not context.user_data.get('waiting_fsub'):
+        return
 
-    if not origin or origin.type != "channel":
-        return await msg.reply_text("⚠️ Forward a channel message only.")
+    message = update.message
+    if not message or not message.forward_origin:
+        await message.reply_text("⚠️ Please forward a channel message.")
+        return
+
+    origin = message.forward_origin
+
+    # Must be forwarded from a channel
+    if origin.type != "channel":
+        await message.reply_text("⚠️ This is not a channel message.")
+        return
 
     chat = origin.chat
     channel_id = chat.id
+    channel_title = chat.title
 
+    # Verify bot admin status
     try:
         member = await context.bot.get_chat_member(channel_id, context.bot.id)
         if member.status not in ("administrator", "creator"):
-            return await msg.reply_text("❌ Bot must be admin in channel.")
-    except:
-        return await msg.reply_text("❌ Cannot verify bot permissions.")
+            await message.reply_text(
+                "❌ Bot must be admin in this channel to use force subscribe."
+            )
+            return
+    except Exception:
+        await message.reply_text("❌ Unable to verify bot permissions.")
+        return
 
+    channels = load_force_sub()
+
+    # Prevent duplicates
+    if any(c["id"] == channel_id for c in channels):
+        await message.reply_text("❌ This channel is already added.")
+        return
+
+    # ✅ Store ONLY safe data
     context.user_data["pending_channel"] = {
         "id": channel_id,
-        "title": chat.title,
-        "username": chat.username,
-        "invite_link": chat.invite_link,
-        "added_by": update.effective_user.id
+        "title": channel_title,
+        "username": chat.username,  # None if private
+        "added_by": user_id
     }
 
-    await msg.reply_text(
+    await message.reply_text(
         "⚙️ **Choose Force Subscribe Mode**",
         reply_markup=InlineKeyboardMarkup([
             [
@@ -192,7 +219,6 @@ async def forwarded_channel_handler(update: Update, context: ContextTypes.DEFAUL
             ]
         ]),
         parse_mode="Markdown"
-    )
 # Force subscription check function
 async def check_force_subscription(update: Update, context: ContextTypes.DEFAULT_TYPE, user_id: int):
     channels = load_force_sub()
