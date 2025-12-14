@@ -230,9 +230,11 @@ async def check_force_subscription(
     user_id: int
 ):
     channels = load_force_sub()
-
     if not channels:
         return True
+
+    # Track request-mode channels already shown to this user
+    requested_channels = context.user_data.get("requested_channels", set())
 
     temp_msg = await update.message.reply_text(
         "ᴄʜᴇᴄᴋɪɴɢ sᴜʙsᴄʀɪᴘᴛɪᴏɴ...."
@@ -244,11 +246,15 @@ async def check_force_subscription(
         channel_id = channel["id"]
         mode = channel.get("mode", "normal")
 
+        # 🔒 REQUEST MODE → show force-sub only once
+        if mode == "request" and channel_id in requested_channels:
+            continue
+
         try:
             member = await context.bot.get_chat_member(channel_id, user_id)
             status = member.status
 
-            # ❌ Always fail if left or kicked
+            # ❌ Always fail if left/kicked
             if status in ("left", "kicked"):
                 unsubscribed_channels.append(channel)
                 continue
@@ -260,50 +266,45 @@ async def check_force_subscription(
                 unsubscribed_channels.append(channel)
                 continue
 
-            # ✅ Request mode → member OR pending request is OK
+            # ✅ Request mode → allow member / restricted
             if mode == "request":
                 if status in ("member", "restricted"):
                     continue
                 unsubscribed_channels.append(channel)
                 continue
 
-        except Exception as e:
-            print(f"Error checking subscription for {channel_id}: {e}")
-
-            # 🔥 CRITICAL FIX:
-            # In request mode, Telegram throws exception for pending join request
+        except Exception:
+            # 🔥 Telegram throws error for pending join request
             if mode == "request":
-                continue  # allow pending request
-
+                continue
             unsubscribed_channels.append(channel)
 
-    # ❌ Not verified
+    # ❌ Still not verified
     if unsubscribed_channels:
         await asyncio.sleep(0.5)
         await temp_msg.edit_text(
             "❌ ɴᴏᴛ ᴠᴇʀɪғɪᴇᴅ!\n"
             "ᴘʟᴇᴀsᴇ ᴊᴏɪɴ ᴀʟʟ ᴄʜᴀɴɴᴇʟs ᴛᴏ ᴄᴏɴᴛɪɴᴜᴇ"
         )
-        await asyncio.sleep(0.6)
+        await asyncio.sleep(0.4)
         await temp_msg.delete()
         await send_force_sub_message(update, context, unsubscribed_channels)
         return False
 
     # ✅ Verified
     try:
-        await asyncio.sleep(0.3)
         await temp_msg.edit_text("ᴠᴇʀɪғɪᴇᴅ ✅")
         await asyncio.sleep(0.4)
-        await temp_msg.edit_text("ᴘʟᴇᴀsᴇ ᴡᴀɪᴛ....")
-        await asyncio.sleep(0.3)
         await temp_msg.delete()
-    except Exception as e:
-        print(f"Error cleaning message: {e}")
+    except:
+        pass
 
     return True
-
     
 async def send_force_sub_message(update: Update, context: ContextTypes.DEFAULT_TYPE, channels):
+    context.user_data.setdefault("requested_channels", set()).update(
+    ch["id"] for ch in channels if ch.get("mode") == "request"
+    )
     settings = load_settings()
     force_sub_image = settings.get("force_sub_image", "")
     
