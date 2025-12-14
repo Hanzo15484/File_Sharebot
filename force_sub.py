@@ -1,178 +1,198 @@
-# force_sub.py
 import os
-from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
-from telegram.ext import ContextTypes, CommandHandler, MessageHandler, filters
 import asyncio
-# Import shared functions
-from shared_functions import load_admins, load_settings, load_force_sub, save_force_sub
+from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
+from telegram.ext import ContextTypes
+from shared_functions import (
+    load_admins,
+    load_settings,
+    load_force_sub,
+    save_force_sub
+)
+
+OWNER_ID = 5373577888
+COUNTDOWN_SECONDS = 60
+
+# ─────────────────────────────────────────────
+# Utility
+# ─────────────────────────────────────────────
+
+def is_admin(user_id: int) -> bool:
+    return user_id == OWNER_ID or user_id in load_admins()
+
+# ─────────────────────────────────────────────
+# UI Renderer
+# ─────────────────────────────────────────────
+
+async def render_fsub_menu(message, context):
+    channels = load_force_sub()
+
+    keyboard = []
+    for ch in channels:
+        keyboard.append([
+            InlineKeyboardButton(
+                f"🗑️ {ch['title']}",
+                callback_data=f"fsub_delete_{ch['id']}"
+            )
+        ])
+
+    keyboard.append([InlineKeyboardButton("➕ Add Channel", callback_data="fsub_add")])
+    keyboard.append([InlineKeyboardButton("❌ Close", callback_data="fsub_close")])
+
+    text = "📢 **Force Subscribe Channels**\n\n"
+    if channels:
+        for ch in channels:
+            text += f"• {ch['title']} — `{ch.get('mode','normal')}`\n"
+    else:
+        text += "No channels added yet."
+
+    await message.edit_text(
+        text,
+        reply_markup=InlineKeyboardMarkup(keyboard),
+        parse_mode="Markdown"
+    )
+
+# ─────────────────────────────────────────────
+# /fsub Command
+# ─────────────────────────────────────────────
 
 async def force_sub_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    user_id = update.effective_user.id
-    admins = load_admins()
-    
-    # Check if user is admin or owner
-    if user_id not in admins and user_id != 5373577888:
-        await update.message.reply_text("You are not authorized to use this command!")
-        return
-    
-    channels = load_force_sub()
-    
-    keyboard = []
-    if channels:
-        # Add delete buttons for each channel
-        for channel in channels:
-            keyboard.append([
-                InlineKeyboardButton(f"🗑️ {channel['title']}", callback_data=f"fsub_delete_{channel['id']}")
-            ])
-    
-    # Always show Add Channel and Close buttons
-    keyboard.append([InlineKeyboardButton("➕ Add Channel", callback_data="fsub_add_channel")])
-    keyboard.append([InlineKeyboardButton("❌ Close", callback_data="fsub_close")])
-    
-    reply_markup = InlineKeyboardMarkup(keyboard)
-    
-    if channels:
-        channels_text = "\n".join([f"• {channel['title']} (ID: {channel['id']})" for channel in channels])
-        text = f"📢 **Force Subscribe Channels**\n\n{channels_text}\n\nSelect a channel to delete or add new:"
-    else:
-        text = "📢 **Force Subscribe Channels**\n\nNo channels added yet.\n\nChoose an option:"
-    
-    await update.message.reply_text(text, reply_markup=reply_markup, parse_mode="Markdown")
+    if not is_admin(update.effective_user.id):
+        return await update.message.reply_text("❌ Not authorized")
+
+    msg = await update.message.reply_text("Loading...")
+    await render_fsub_menu(msg, context)
+
+# ─────────────────────────────────────────────
+# Countdown Timer
+# ─────────────────────────────────────────────
+
+async def fsub_countdown(message, context):
+    for i in range(COUNTDOWN_SECONDS, 0, -1):
+        if not context.user_data.get("waiting_fsub"):
+            return
+        try:
+            await message.edit_text(
+                f"📢 **Forward channel message**\n\n⏳ Time left: **{i}s**",
+                reply_markup=message.reply_markup,
+                parse_mode="Markdown"
+            )
+        except:
+            pass
+        await asyncio.sleep(1)
+
+    context.user_data.clear()
+    await message.edit_text("❌ Timeout! Please use /fsub again.")
+
+# ─────────────────────────────────────────────
+# Button Handler
+# ─────────────────────────────────────────────
 
 async def force_sub_button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
     await query.answer()
-    
+
+    if not is_admin(query.from_user.id):
+        return await query.answer("Unauthorized", show_alert=True)
+
     data = query.data
-    user_id = query.from_user.id
-    admins = load_admins()
-    
-    # Check if user is admin or owner
-    if user_id not in admins and user_id != 5373577888:
-        await query.answer("You are not authorized!", show_alert=True)
-        return
-    
-    if data == "fsub_add_channel":
+
+    if data == "fsub_add":
+        context.user_data["waiting_fsub"] = True
+
         await query.edit_message_text(
-            "📢 **Add Force Subscribe Channel**\n\n"
-            "ɴᴏᴡ ғᴏʀᴡᴀʀᴅ ᴀ ᴍᴇssᴀɢᴇ ғʀᴏᴍ ʏᴏᴜʀ ᴄʜᴀɴɴᴇʟ ᴀɴᴅ ᴍᴀᴋᴇ sᴜʀᴇ ᴛʜᴀᴛ ᴛʜᴇ ʙᴏᴛ ɪs ᴀᴅᴍɪɴ ɪɴ ᴛʜᴀᴛ ᴄʜᴀɴɴᴇʟ.",
+            "📢 **Forward channel message**\n\n⏳ Time left: **60s**",
             reply_markup=InlineKeyboardMarkup([
-                [InlineKeyboardButton("🔙 Back", callback_data="fsub_back"), InlineKeyboardButton("❌ Close", callback_data="fsub_close")]
+                [
+                    InlineKeyboardButton("🔙 Back", callback_data="fsub_back"),
+                    InlineKeyboardButton("❌ Close", callback_data="fsub_close")
+                ]
             ]),
             parse_mode="Markdown"
         )
-        context.user_data['waiting_for_channel'] = True
-        
-    elif data.startswith("fsub_delete_"):
-        channel_id = int(data.split("_")[2])
-        channels = load_force_sub()
-        
-        # Find and remove the channel
-        channel_to_delete = None
-        for channel in channels:
-            if channel['id'] == channel_id:
-                channel_to_delete = channel
-                break
-        
-        if channel_to_delete:
-            channels = [ch for ch in channels if ch['id'] != channel_id]
-            save_force_sub(channels)
-            await query.answer(f"✅ {channel_to_delete['title']} removed from force subscribe!", show_alert=True)
-            await force_sub_handler(update, context)
-        else:
-            await query.answer("❌ Channel not found!", show_alert=True)
-        
+
+        asyncio.create_task(fsub_countdown(query.message, context))
+
     elif data == "fsub_back":
-        await force_sub_handler(update, context)
-        
+        context.user_data.clear()
+        await render_fsub_menu(query.message, context)
+
     elif data == "fsub_close":
         await query.message.delete()
 
-async def forwarded_channel_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    user_id = update.effective_user.id
-    admins = load_admins()
-    
-    # Check if user is admin or owner
-    if user_id not in admins and user_id != 5373577888:
-        return
-    
-    # Only process if we're specifically waiting for channel in force sub
-    if not context.user_data.get('waiting_for_channel'):
-        return  # Let batch handler process this forwarded message
-    
-    message = update.message
-    
-    if not message or not message.forward_origin:
-        await message.reply_text("⚠️ This message is not forwarded from a channel!")
-        return
-
-    origin = message.forward_origin
-
-    # If forwarded from a channel
-    if origin.type == "channel":
-        channel_id = origin.chat.id
-        channel_title = origin.chat.title
-
-        try:
-            chat = await context.bot.get_chat(channel_id)
-            invite_link = getattr(chat, "invite_link", None)
-            if not invite_link:
-                try:
-                    new_invite = await context.bot.create_chat_invite_link(
-                        chat_id=channel_id,
-                        name=f"Permanet link_{channel_title}",
-                        creates_join_request=False
-                    )
-                    invite_link=new_invite.invite_link
-                except Exception as e:
-                  print(f"error fetching invite link {channel_title}, {e}:")
-        except Except as e:
-            print(f"error in creating new link {e}:")
-        # Check if bot is admin in the channel
-        try:
-            chat_member = await context.bot.get_chat_member(channel_id, context.bot.id)
-            if chat_member.status not in ['administrator', 'creator']:
-                await message.reply_text("❌ Bot is not admin in this channel! Please make bot admin first.")
-                return
-        except Exception as e:
-            await message.reply_text("❌ Cannot verify bot admin status in this channel!")
-            return
-        
-        # Add channel to force sub list
+    elif data.startswith("fsub_delete_"):
+        cid = int(data.split("_")[-1])
         channels = load_force_sub()
-        
-        # Check if channel already exists
-        if any(channel['id'] == channel_id for channel in channels):
-            await message.reply_text("❌ This channel is already in force subscribe list!")
-            return
-        
-        channels.append({
-            "id": channel_id,
-            "title": channel_title,
-            "invite_link": invite_link,
-            "username": origin.chat.username,
-            "added_by": user_id
-        })
-        
+        channels = [c for c in channels if c["id"] != cid]
         save_force_sub(channels)
-        
-        keyboard = InlineKeyboardMarkup([
-            [InlineKeyboardButton("➕ Add Channel", callback_data="fsub_add_channel")],
-            [InlineKeyboardButton("🔙 Back", callback_data="fsub_back"), InlineKeyboardButton("❌ Close", callback_data="fsub_close")]
-        ])
-        
-        await message.reply_text(
-            f"✅ Successfully added **{channel_title}** as force subscribe channel!",
-            reply_markup=keyboard,
-            parse_mode="Markdown"
+        await render_fsub_menu(query.message, context)
+
+    elif data == "fsub_mode_normal":
+        ch = context.user_data.pop("pending_channel")
+        ch["mode"] = "normal"
+        save_force_sub(load_force_sub() + [ch])
+        context.user_data.clear()
+        await render_fsub_menu(query.message, context)
+
+    elif data == "fsub_mode_request":
+        ch = context.user_data.pop("pending_channel")
+        ch["mode"] = "request"
+        ch["status"] = "pending"
+        save_force_sub(load_force_sub() + [ch])
+        context.user_data.clear()
+
+        await query.edit_message_text(
+            "🕓 **Request mode enabled**\nAdmin approval required.",
+            reply_markup=InlineKeyboardMarkup([
+                [InlineKeyboardButton("🔙 Back", callback_data="fsub_back")]
+            ])
         )
-        
-        # Clear waiting state
-        context.user_data.pop('waiting_for_channel', None)
 
-    else:
-        await message.reply_text("⚠️ This forwarded message is not from a channel.")
+# ─────────────────────────────────────────────
+# Forwarded Channel Handler
+# ─────────────────────────────────────────────
 
+async def forwarded_channel_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    if not context.user_data.get("waiting_fsub"):
+        return
+
+    msg = update.message
+    origin = msg.forward_origin
+
+    if not origin or origin.type != "channel":
+        return await msg.reply_text("⚠️ Forward a channel message only.")
+
+    chat = origin.chat
+    channel_id = chat.id
+
+    try:
+        member = await context.bot.get_chat_member(channel_id, context.bot.id)
+        if member.status not in ("administrator", "creator"):
+            return await msg.reply_text("❌ Bot must be admin in channel.")
+    except:
+        return await msg.reply_text("❌ Cannot verify bot permissions.")
+
+    context.user_data["pending_channel"] = {
+        "id": channel_id,
+        "title": chat.title,
+        "username": chat.username,
+        "invite_link": chat.invite_link,
+        "added_by": update.effective_user.id
+    }
+
+    await msg.reply_text(
+        "⚙️ **Choose Force Subscribe Mode**",
+        reply_markup=InlineKeyboardMarkup([
+            [
+                InlineKeyboardButton("✅ Normal Mode", callback_data="fsub_mode_normal"),
+                InlineKeyboardButton("🕓 Request Mode", callback_data="fsub_mode_request")
+            ],
+            [
+                InlineKeyboardButton("🔙 Back", callback_data="fsub_back"),
+                InlineKeyboardButton("❌ Close", callback_data="fsub_close")
+            ]
+        ]),
+        parse_mode="Markdown"
+    )
 # Force subscription check function
 async def check_force_subscription(update: Update, context: ContextTypes.DEFAULT_TYPE, user_id: int):
     channels = load_force_sub()
@@ -269,4 +289,4 @@ async def send_force_sub_message(update: Update, context: ContextTypes.DEFAULT_T
                 text=text,
                 reply_markup=keyboard,
                 parse_mode="Markdown"
-            )
+        )
