@@ -301,33 +301,79 @@ async def check_force_subscription(
 
     return True
     
-async def send_force_sub_message(update: Update, context: ContextTypes.DEFAULT_TYPE, channels):
-    context.user_data.setdefault("requested_channels", set()).update(
-    ch["id"] for ch in channels if ch.get("mode") == "request"
-    )
+async def send_force_sub_message(
+    update: Update,
+    context: ContextTypes.DEFAULT_TYPE,
+    channels
+):
     settings = load_settings()
     force_sub_image = settings.get("force_sub_image", "")
-    
-    channels_text = "\n".join([f"• {channel['title']}" for channel in channels])
-    
+
+    user_id = update.effective_user.id
+
+    # Track request-mode channels already shown
+    requested_channels = context.user_data.get("requested_channels", set())
+
+    # 🔥 FINAL FILTER (CRITICAL)
+    filtered_channels = []
+
+    for ch in channels:
+        channel_id = ch["id"]
+        mode = ch.get("mode", "normal")
+
+        # ❌ Skip request-mode channels already shown once
+        if mode == "request" and channel_id in requested_channels:
+            continue
+
+        try:
+            member = await context.bot.get_chat_member(channel_id, user_id)
+
+            # ❌ Skip already joined channels
+            if member.status == "member":
+                continue
+
+        except Exception:
+            # Request-mode pending join → allow only once
+            if mode == "request":
+                pass
+            else:
+                continue
+
+        filtered_channels.append(ch)
+
+    # ❌ Nothing to force anymore
+    if not filtered_channels:
+        return
+
+    # 📌 Build message text
+    channels_text = "\n".join(
+        f"• {channel['title']}" for channel in filtered_channels
+    )
+
     text = (
         "🔒 **Join Required Channels**\n\n"
         "ʏᴏᴜ ᴍᴜsᴛ ᴊᴏɪɴ ᴛʜᴇ ғᴏʟʟᴏᴡɪɴɢ ᴄʜᴀɴɴᴇʟ(s) ᴛᴏ ᴀᴄᴄᴇss ᴛʜᴇ ғɪʟᴇs:\n\n"
         f"{channels_text}\n\n"
         "ᴀғᴛᴇʀ ᴊᴏɪɴɪɴɢ, ᴄʟɪᴄᴋ ᴛʜᴇ \"🔄 ᴛʀʏ ᴀɢᴀɪɴ\" ʙᴜᴛᴛᴏɴ."
     )
-    
-    # ✅ Everything below is indented INSIDE the async function
+
+    # 🔘 Build buttons
     buttons = []
     row = []
 
-    for index, channel in enumerate(channels[:6], start=1):
+    for index, channel in enumerate(filtered_channels[:6], start=1):
         channel_url = (
             channel.get("invite_link")
-            or (f"https://t.me/{channel['username']}" if channel.get("username") else f"https://t.me/c/{str(channel['id'])[4:]}")
+            or (
+                f"https://t.me/{channel['username']}"
+                if channel.get("username")
+                else f"https://t.me/c/{str(channel['id'])[4:]}"
+            )
         )
 
-        row.append(InlineKeyboardButton(f"{channel['title']}", url=channel_url))
+        row.append(
+            InlineKeyboardButton(channel["title"], url=channel_url)
+        )
 
         if index % 2 == 0:
             buttons.append(row)
@@ -335,15 +381,22 @@ async def send_force_sub_message(update: Update, context: ContextTypes.DEFAULT_T
 
     if row:
         buttons.append(row)
+
     encoded_link = context.user_data.get("original_encoded_id", "home")
-    
-    buttons.append([InlineKeyboardButton("🔄 ᴛʀʏ ᴀɢᴀɪɴ", url=f"https://t.me/Rimuru_filebot?start={encoded_link}")])
+
+    buttons.append([
+        InlineKeyboardButton(
+            "🔄 ᴛʀʏ ᴀɢᴀɪɴ",
+            url=f"https://t.me/Rimuru_filebot?start={encoded_link}"
+        )
+    ])
 
     keyboard = InlineKeyboardMarkup(buttons)
 
+    # 🖼️ Send message
     if force_sub_image and os.path.exists(force_sub_image):
         try:
-            with open(force_sub_image, 'rb') as photo:
+            with open(force_sub_image, "rb") as photo:
                 await context.bot.send_photo(
                     chat_id=update.effective_chat.id,
                     photo=photo,
@@ -351,7 +404,6 @@ async def send_force_sub_message(update: Update, context: ContextTypes.DEFAULT_T
                     reply_markup=keyboard,
                     parse_mode="Markdown"
                 )
-            return
         except Exception as e:
             print(f"Error sending photo: {e}")
             await context.bot.send_message(
@@ -359,4 +411,17 @@ async def send_force_sub_message(update: Update, context: ContextTypes.DEFAULT_T
                 text=text,
                 reply_markup=keyboard,
                 parse_mode="Markdown"
+            )
+    else:
+        await context.bot.send_message(
+            chat_id=update.effective_chat.id,
+            text=text,
+            reply_markup=keyboard,
+            parse_mode="Markdown"
         )
+
+    # ✅ Mark request-mode channels as shown (ONLY AFTER SENDING)
+    requested_channels.update(
+        ch["id"] for ch in filtered_channels if ch.get("mode") == "request"
+    )
+    context.user_data["requested_channels"] = requested_channels
