@@ -218,8 +218,8 @@ async def forwarded_channel_handler(update: Update, context: ContextTypes.DEFAUL
                 InlineKeyboardButton("❌ Close", callback_data="fsub_close")
             ]
         ]),
-    )
         parse_mode="Markdown"
+    )
 # Force subscription check function
 async def check_force_subscription(update: Update, context: ContextTypes.DEFAULT_TYPE, user_id: int):
     channels = load_force_sub()
