@@ -96,7 +96,6 @@ def main():
     .write_timeout(20)
     .connect_timeout(10)
     .pool_timeout(10)
-    .concurrent_updates(False)
     .build())
 
     if hasattr(application.updater, 'job_queue') and hasattr(application.updater.job_queue, 'scheduler'):
@@ -189,16 +188,6 @@ def main():
         logging.error(f"Exception while handling an update: {context.error}")
     
     application.add_error_handler(error_handler)
-
-    async def debug_callback(update, context):
-        query = update.callback_query
-        print("Callback:", query.data)
-        await query.answer()
-
-    application.add_handler(
-        CallbackQueryHandler(debug_callback),
-        group=999
-    )
 
     # Display loaded modules and commands
     print("\n✅ Bot initialized successfully!")
