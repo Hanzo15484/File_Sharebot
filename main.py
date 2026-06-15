@@ -195,7 +195,7 @@ def main():
         print("Callback:", query.data)
         await query.answer()
 
-    application.addhandler(
+    application.add_handler(
         CallbackQueryHandler(debug_callback),
         group=999
     )
