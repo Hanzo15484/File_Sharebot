@@ -146,11 +146,12 @@ def main():
 
     application.add_handler(CallbackQueryHandler(broadcast_button_handler, pattern="^broadcast_"))
     # Links module callbacks
-    application.add_handler(CallbackQueryHandler(link_button_handler, pattern="^link_close|copy_original_.$"))
+    application.add_handler(CallbackQueryHandler(link_button_handler, pattern="^link_"))
     application.add_handler(
     MessageHandler(~filters.COMMAND, genlink_next_message),
     group=3
     )
+    application.add_handler(CallbackQueryHandler(link_button_handler, pattern="^copy_original_"))
     
     # Settings module callbacks - multiple patterns
     application.add_handler(CallbackQueryHandler(settings_button_handler, pattern="^settings_"))
