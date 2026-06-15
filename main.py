@@ -191,14 +191,14 @@ def main():
     application.add_error_handler(error_handler)
 
     async def debug_callback(update, context):
-    query = update.callback_query
-    print("Callback:", query.data)
-    await query.answer()
+        query = update.callback_query
+        print("Callback:", query.data)
+        await query.answer()
 
-application.add_handler(
-    CallbackQueryHandler(debug_callback),
-    group=999
-)
+    application.addhandler(
+        CallbackQueryHandler(debug_callback),
+        group=999
+    )
 
     # Display loaded modules and commands
     print("\n✅ Bot initialized successfully!")
