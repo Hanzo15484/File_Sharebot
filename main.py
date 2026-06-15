@@ -96,7 +96,7 @@ def main():
     .write_timeout(20)
     .connect_timeout(10)
     .pool_timeout(10)
-    .concurrent_updates(True)
+    .concurrent_updates(False)
     .build())
 
     if hasattr(application.updater, 'job_queue') and hasattr(application.updater.job_queue, 'scheduler'):
